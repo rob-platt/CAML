@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
-    NavigationToolbar2Tk,
 )
 from matplotlib.figure import Figure
 
@@ -93,7 +92,15 @@ class ChannelViewer:
         self.canvas_right.get_tk_widget().columnconfigure(0, weight=1)
         self.canvas_right.get_tk_widget().rowconfigure(0, weight=1)
 
-    def setup_controls(self, num_channels: int = 438):
+    def setup_controls(
+        self, summary_params: list = [], num_channels: int = 438
+    ):
+        """
+        Set up control bar for the GUI. Instantiates the following widgets:
+        - File selection button to load a new image
+        - Dropdown menu for what image to display
+        - Optional dropdown menu for channel selection
+        """
 
         def on_popdown_show(combo: ttk.Combobox):
             """Make combobox dropdown drop up instead of down."""
@@ -123,6 +130,26 @@ class ChannelViewer:
         )
         file_button.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
+        summary_params.append("Ratioed Image Channel")
+
+        self.image_selection_dropdown = ttk.Combobox(
+            control_frame,
+            values=summary_params,
+            style="Custom.TCombobox",
+            width=25,
+        )
+        self.image_selection_dropdown.bind(
+            "<FocusIn>",
+            lambda e: on_popdown_show(self.image_selection_dropdown),
+        )
+        self.image_selection_dropdown.bind(
+            "<<ComboboxSelected>>", self.update_left_plot
+        )
+        self.image_selection_dropdown.set("Ratioed Image Channel")
+        self.image_selection_dropdown.grid(
+            row=0, column=1, padx=5, pady=5, sticky="nsew"
+        )
+
         self.channel_dropdown = ttk.Combobox(
             control_frame,
             values=list(range(num_channels)),
@@ -137,19 +164,30 @@ class ChannelViewer:
             "<<ComboboxSelected>>", self.update_left_plot
         )
         self.channel_dropdown.grid(
-            row=0, column=1, padx=5, pady=5, sticky="nsew"
+            row=0, column=2, padx=5, pady=5, sticky="nsew"
         )
 
     def update_left_plot(self, event):
-        if event == "Initialization":
-            selected_channel = 60
-        else:
-            selected_channel = int(self.channel_dropdown.get())
-        self.ax_left.clear()
-        self.ax_left.imshow(
-            self.image_array[:, :, selected_channel], cmap="viridis"
-        )
-        self.ax_left.set_title(f"Channel {selected_channel}")
+        image_selection = self.image_selection_dropdown.get()
+        if image_selection == "Ratioed Image Channel":
+            if event == "Initialization":
+                selected_channel = 60
+            else:
+                self.channel_dropdown.state(["!disabled"])
+                selected_channel = int(self.channel_dropdown.get())
+            self.ax_left.clear()
+            self.ax_left.imshow(
+                self.image_array[:, :, selected_channel], cmap="viridis"
+            )
+            self.ax_left.set_title(f"Channel {selected_channel}")
+        elif image_selection in IMPLEMENTED_SUMMARY_PARAMETERS:
+            self.ax_left.clear()
+            self.ax_left.imshow(
+                self.visualizer.get_summary_parameter(image_selection),
+                cmap="viridis",
+            )
+            self.ax_left.set_title(f"{image_selection} Summary Parameter")
+            self.channel_dropdown.state(["disabled"])
         self.canvas_left.draw()
 
     def toggle_hover(self, event):
@@ -194,11 +232,11 @@ class ChannelViewer:
                 image.calculate_summary_parameter(parameter)
 
             # Create visualizer and get image data
-            visualizer = Visualiser(image)
-            visualizer.get_image(60)
+            self.visualizer = Visualiser(image)
+            self.visualizer.get_image(60)
 
             # Store the image data
-            self.image_array = visualizer.raw_image_copy
+            self.image_array = self.visualizer.raw_image_copy
 
             # Initialize left plot
             self.setup_left_plot()
@@ -208,7 +246,7 @@ class ChannelViewer:
 
             # Initialize controls
             num_channels = self.image_array.shape[2]
-            self.setup_controls(num_channels)
+            self.setup_controls(summary_parameters, num_channels)
 
             # Update the display
             self.update_left_plot("Initialization")
