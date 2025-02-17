@@ -14,7 +14,10 @@ RATIO_DATA = "/home/rob_platt/pixel_classifier/data/CRISM_ML"
 
 
 class ChannelViewer:
-    def __init__(self, root):
+    def __init__(self, root, filepath: str = None):
+        """Initialize the Channel Viewer GUI.
+        If image filepath passed, image loading prompt is skipped.
+        """
         self.root = root
         self.root.title("Channel Viewer GUI")
         self.hover_paused = False
@@ -29,8 +32,10 @@ class ChannelViewer:
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
 
-        # Create image loading frame
-        self.prompt_file_selection()
+        if filepath:
+            self.load_image(filepath)
+        else:
+            self.prompt_file_selection()
 
     def prompt_file_selection(self):
         """Open a separate window to prompt file selection on launch."""
@@ -45,7 +50,7 @@ class ChannelViewer:
         file_button = tk.Button(
             self.file_window, text="Choose File", command=self.load_image
         )
-        # center the label above the button using grid
+
         self.file_window_label.place(relx=0.5, rely=0.3, anchor="center")
         file_button.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -89,6 +94,27 @@ class ChannelViewer:
         self.canvas_right.get_tk_widget().rowconfigure(0, weight=1)
 
     def setup_controls(self, num_channels: int = 438):
+
+        def on_popdown_show(combo: ttk.Combobox):
+            """Make combobox dropdown drop up instead of down."""
+            try:
+                popup = combo.master.tk.eval(
+                    f"ttk::combobox::PopdownWindow {combo._w}"
+                )
+                # get the height of the listbox inside popup window
+                popup_height = combo.master.tk.call(
+                    "winfo", "reqheight", f"{popup}.f.l"
+                )
+                # get the height of combobox
+                combo_height = combo.winfo_height()
+                # set the position of the popup window
+                ttk.Style().configure(
+                    "Custom.TCombobox",
+                    postoffset=(0, -combo_height - popup_height, 0, 0),
+                )
+            except tk.TclError:
+                pass
+
         control_frame = tk.Frame(self.root)
         control_frame.grid(row=4, column=0, sticky="nsew")
 
@@ -98,13 +124,21 @@ class ChannelViewer:
         file_button.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
         self.channel_dropdown = ttk.Combobox(
-            control_frame, values=list(range(num_channels))
+            control_frame,
+            values=list(range(num_channels)),
+            style="Custom.TCombobox",
         )
+        self.channel_dropdown.bind(
+            "<FocusIn>", lambda e: on_popdown_show(self.channel_dropdown)
+        )
+
         self.channel_dropdown.set(60)
         self.channel_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
-        self.channel_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        self.channel_dropdown.grid(
+            row=0, column=1, padx=5, pady=5, sticky="nsew"
+        )
 
     def update_left_plot(self, event):
         if event == "Initialization":
@@ -134,31 +168,25 @@ class ChannelViewer:
 
             self.canvas_right.draw()
 
-    def load_image(self):
-        # Dummied file loading as not needed for dev
-        # filepath = "/home/rob_platt/pixel_classifier/data/FRT00008F68_07_IF165L_TRR3.img"
+    def load_image(self, filepath=None):
         # Open file dialog and get file path
-        filepath = filedialog.askopenfilename(
-            title="Select CRISM Image",
-            filetypes=[("IMG files", "*.img"), ("All files", "*.*")],
-        )
-
-        # Only proceed if a file was selected
         if not filepath:
-            return
-
+            filepath = filedialog.askopenfilename(
+                title="Select CRISM Image",
+                filetypes=[("IMG files", "*.img"), ("All files", "*.*")],
+            )
         try:
-            self.update_file_loading_status("Loading image...")
+            # self.update_file_loading_status("Loading image...")
             # Create CRISM image object
             image = CRISMImage(filepath)
 
-            self.update_file_loading_status("Processing image...")
+            # self.update_file_loading_status("Processing image...")
             # Process image ratios
             image.ratio_image(RATIO_DATA)
 
-            self.update_file_loading_status(
-                "Calculating summary parameters..."
-            )
+            # self.update_file_loading_status(
+            #     "Calculating summary parameters..."
+            # )
             # # Calculate all required summary parameters
             summary_parameters = [*IMPLEMENTED_SUMMARY_PARAMETERS.keys()]
 
@@ -190,7 +218,8 @@ class ChannelViewer:
             self.ax_right.set_title("Channel View")
             self.canvas_right.draw()
 
-            self.file_window.destroy()
+            # self.file_window.destroy()
+
         except Exception as e:
             self.ax_left.clear()
             self.ax_left.set_title(f"Error loading image: {str(e)}")
@@ -199,5 +228,8 @@ class ChannelViewer:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ChannelViewer(root)
+    app = ChannelViewer(
+        root,
+        "/home/rob_platt/pixel_classifier/data/FRT00008F68_07_IF165L_TRR3.img",
+    )
     root.mainloop()
