@@ -133,7 +133,7 @@ class ChannelViewer:
                 pass
 
         self.control_frame = tk.Frame(self.root)
-        self.control_frame.grid(row=4, column=0, sticky="nsew")
+        self.control_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
         # File selection button
         file_button = tk.Button(
@@ -230,9 +230,10 @@ class ChannelViewer:
         if not self.hover_paused and event.inaxes == self.ax_left:
             x, y = int(event.xdata), int(event.ydata)
             self.ax_right.clear()
-            self.ax_right.plot(self.image_array[y, x, :])
+            self.ax_right.plot(self.ratioed_array[y, x, :])
             self.ax_right.set_title("Pixel ({}, {}) Channel View".format(x, y))
-
+            self.ax_right.set_xlabel("Channel")
+            self.ax_right.set_ylabel("Ratioed I/F")
             self.canvas_right.draw()
 
     def add_classification_controls(self):
@@ -246,18 +247,95 @@ class ChannelViewer:
             row=0, column=4, rowspan=2, padx=5, sticky="nsew"
         )
 
+        filtering_label = tk.Label(
+            self.control_frame, text="Filtering Options:"
+        )
+        filtering_label.grid(row=0, column=5, padx=5, sticky="nesw")
+
+        self.confidence_slider = tk.Scale(
+            self.control_frame,
+            from_=0,
+            to=1,
+            resolution=0.05,
+            orient="horizontal",
+            label="Confidence Threshold",
+            length=200,
+            showvalue=True,
+        )
+        self.confidence_slider.set(0.0)
+        self.confidence_slider.grid(
+            row=1, column=5, columnspan=3, padx=5, sticky="nesw"
+        )
+
+        self.connect_comp_slider = tk.Scale(
+            self.control_frame,
+            from_=0,
+            to=100,
+            resolution=5,
+            orient="horizontal",
+            label="Connected Components",
+            length=200,
+            showvalue=True,
+        )
+        self.connect_comp_slider.set(0)
+        self.connect_comp_slider.grid(
+            row=1, column=8, columnspan=3, padx=5, sticky="nsew"
+        )
+
+        self.run_filtering_button = tk.Button(
+            self.control_frame,
+            text="Run Filtering",
+            command=self.classification_filter,
+        )
+        self.run_filtering_button.grid(
+            row=0, column=11, rowspan=2, padx=5, sticky="nsew"
+        )
+
+    def classification_filter(self):
+        """Filter classification results based on confidence threshold,
+        and connected components."""
+        conf_threshold = self.confidence_slider.get()
+        min_components = self.connect_comp_slider.get()
+
+        self.pred_coords = convert_to_coords_filter_regions_by_conf(
+            self.pred_cls,
+            self.pred_conf,
+            min_confidence=conf_threshold,
+            min_area=min_components,
+        )
+        self.pred_coords = {
+            k: v
+            for k, v in sorted(
+                self.pred_coords.items(),
+                key=lambda item: len(item[1]),
+                reverse=True,
+            )
+        }
+        self.plot_classification()
+
+    def plot_classification(self):
+        # clear left plot
+        self.ax_left.clear()
+        self.update_left_plot("Plot Classification")
+        for mineral, coords in self.pred_coords.items():
+            if mineral == 1:
+                continue
+            if len(coords) > 1:
+                self.ax_left.scatter(
+                    coords[0], coords[1], s=0.1, label=mineral
+                )
+        self.canvas_left.draw()
+
     def toggle_classification(self):
         """Plot classification results on top of the left plot."""
-        self.update_left_plot("Classification_Toggle")
         if self.show_classification:
             self.toggle_classification_button.config(
                 text="Classification Results (Off)"
             )
-            for mineral, coords in self.pred_coords.items():
-                self.ax_left.scatter(
-                    coords[0], coords[1], s=0.1, label=mineral
-                )
+            self.plot_classification()
         else:
+            self.ax_left.clear()
+            self.update_left_plot("Classification Off")
             self.toggle_classification_button.config(
                 text="Classification Results (On)"
             )
@@ -291,13 +369,13 @@ class ChannelViewer:
 
         # Split into full blocks
         blocks = [
-            array[i * 1024: (i + 1) * 1024] for i in range(num_full_blocks)
+            array[i * 1024 : (i + 1) * 1024] for i in range(num_full_blocks)
         ]
 
         # Handle the remainder by padding with zeros if necessary
         if remainder > 0:
             padded_block = np.zeros((1024, 248))
-            padded_block[:remainder] = array[num_full_blocks * 1024:]
+            padded_block[:remainder] = array[num_full_blocks * 1024 :]
             blocks.append(padded_block)
 
         return np.array(blocks, dtype="float32"), remainder
@@ -305,11 +383,15 @@ class ChannelViewer:
     def classify(self):
         """Classify the CRISM cube using the CRISM Classifier model."""
         ort_session = onnxruntime.InferenceSession(
-             "/home/rob_platt/CRISM_classifier_application/Notebooks/vae_classifier_1024.onnx", providers=["CPUExecutionProvider"]
+            (
+                "/home/rob_platt/CRISM_classifier_application/Notebooks/"
+                "vae_classifier_1024.onnx"
+            ),
+            providers=["CPUExecutionProvider"],
         )
 
-        image = np.empty_like(self.image_array)
-        image[:] = self.image_array
+        image = np.empty_like(self.visualizer.image.ratioed_image)
+        image[:] = self.visualizer.image.ratioed_image
         image = self.preprocess_image(image)
         batches, remainder = self.batch_array(image)
 
@@ -327,19 +409,8 @@ class ChannelViewer:
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
 
-        self.pred_coords = convert_to_coords_filter_regions_by_conf(
-            self.pred_cls, self.pred_conf
-        )
-        self.pred_coords = {
-            k: v
-            for k, v in sorted(
-                self.pred_coords.items(),
-                key=lambda item: len(item[1]),
-                reverse=True,
-            )
-        }
-
         self.add_classification_controls()
+        self.classification_filter()
         self.toggle_classification()
         self.classification_button.config(state="disabled")
 
@@ -371,9 +442,11 @@ class ChannelViewer:
             # Create visualizer and get image data
             self.visualizer = Visualiser(image)
             self.visualizer.get_image(60)
+            self.visualizer.get_ratioed_spectrum((100, 100))
 
             # Store the image data
             self.image_array = self.visualizer.raw_image_copy
+            self.ratioed_array = self.visualizer.ratioed_image_copy
 
             # Initialize left plot
             self.setup_left_plot()
@@ -405,6 +478,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = ChannelViewer(
         root,
-        "/home/rob_platt/CRISM_classifier_application/data/FRT00009A16_07_IF166L_TRR3.img",
+        (
+            "/home/rob_platt/CRISM_classifier_application/data/"
+            "FRT00009A16_07_IF166L_TRR3.img"
+        ),
     )
     root.mainloop()
