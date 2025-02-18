@@ -6,6 +6,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.figure import Figure
 import numpy as np
 import onnxruntime
+import threading
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
@@ -38,10 +39,11 @@ class ChannelViewer:
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
+        self.plot_frame.rowconfigure(1, weight=1)
 
         if filepath:
             self.filepath = filepath
-            self.load_image(filepath)
+            self.load_image_subroutine(filepath)
         else:
             self.prompt_file_selection()
 
@@ -56,7 +58,9 @@ class ChannelViewer:
         )
 
         file_button = tk.Button(
-            self.file_window, text="Choose File", command=self.load_image
+            self.file_window,
+            text="Choose File",
+            command=self.load_image_subroutine,
         )
 
         self.file_window_label.place(relx=0.5, rely=0.3, anchor="center")
@@ -190,7 +194,7 @@ class ChannelViewer:
             text="Classify",
             bg="#008000",
             activebackground="#5ce65c",
-            command=self.classify,
+            command=self.classification_subroutine,
         )
         self.classification_button.grid(
             row=0, column=3, rowspan=2, padx=5, sticky="nsew"
@@ -235,6 +239,25 @@ class ChannelViewer:
             self.ax_right.set_xlabel("Channel")
             self.ax_right.set_ylabel("Ratioed I/F")
             self.canvas_right.draw()
+
+    def display_loading_window(self, message: str):
+        """Create a loading window with a message."""
+        self.loading_window = tk.Toplevel(self.root)
+        self.loading_window.title("Loading...")
+        self.loading_window.geometry("400x100")
+
+        loading_label = tk.Label(self.loading_window, text=message)
+        loading_label.place(relx=0.5, rely=0.3, anchor="center")
+        self.progress_bar = ttk.Progressbar(
+            self.loading_window,
+            orient="horizontal",
+            length=300,
+            mode="indeterminate",
+        )
+        self.progress_bar.place(relx=0.5, rely=0.5, anchor="center")
+        self.progress_bar.start()
+
+        self.loading_window.update_idletasks()
 
     def add_classification_controls(self):
         """Add controls for classification results to control panel."""
@@ -382,6 +405,7 @@ class ChannelViewer:
 
     def classify(self):
         """Classify the CRISM cube using the CRISM Classifier model."""
+
         ort_session = onnxruntime.InferenceSession(
             (
                 "/home/rob_platt/CRISM_classifier_application/Notebooks/"
@@ -409,78 +433,92 @@ class ChannelViewer:
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
 
-        self.add_classification_controls()
-        self.classification_filter()
-        self.toggle_classification()
-        self.classification_button.config(state="disabled")
+    def classification_subroutine(self):
+        """Subroutine to classify the image in a separate thread."""
+        self.display_loading_window("Classifying image...")
 
-    def load_image(self, filepath=None):
+        thread = threading.Thread(target=self.classify, daemon=True)
+        thread.start()
+
+        def check_thread_state(thread):
+            """Check the state of the thread"""
+            if not thread.is_alive():
+                self.add_classification_controls()
+                self.classification_filter()
+                self.toggle_classification()
+                self.classification_button.config(state="disabled")
+                self.loading_window.destroy()
+            else:
+                self.root.after(1000, check_thread_state, thread)
+
+        check_thread_state(thread)
+
+    def load_image(self, filepath):
+        """Load the CRISM image from the given filepath."""
+        image = CRISMImage(filepath)
+        image.ratio_image(RATIO_DATA)
+        summary_parameters = [*IMPLEMENTED_SUMMARY_PARAMETERS.keys()]
+
+        for parameter in summary_parameters:
+            image.calculate_summary_parameter(parameter)
+
+        # Create visualizer and get image data
+        self.visualizer = Visualiser(image)
+        self.visualizer.get_image(60)
+        self.visualizer.get_ratioed_spectrum((100, 100))
+
+        # Store the image data
+        self.image_array = self.visualizer.raw_image_copy
+        self.ratioed_array = self.visualizer.ratioed_image_copy
+        self.summary_parameters = summary_parameters
+
+    def load_image_subroutine(self, filepath=None):
         # Open file dialog and get file path
         if not filepath:
             filepath = filedialog.askopenfilename(
                 title="Select CRISM Image",
                 filetypes=[("IMG files", "*.img"), ("All files", "*.*")],
             )
+
+        self.display_loading_window("Loading image...")
+
+        def check_thread_state(thread):
+            """Check the state of the thread"""
+            if not thread.is_alive():
+                self.setup_left_plot()
+                self.setup_right_plot()
+                num_channels = self.image_array.shape[2]
+                self.setup_controls(self.summary_parameters, num_channels)
+
+                # Update the display
+                self.update_left_plot("Initialization")
+
+                # Reset right plot
+                self.ax_right.clear()
+                self.ax_right.set_title("Channel View")
+                self.canvas_right.draw()
+
+                self.file_window.destroy()
+                self.loading_window.destroy()
+            else:
+                self.root.after(1000, check_thread_state, thread)
+
         try:
-            # self.update_file_loading_status("Loading image...")
-            # Create CRISM image object
-            image = CRISMImage(filepath)
-
-            # self.update_file_loading_status("Processing image...")
-            # Process image ratios
-            image.ratio_image(RATIO_DATA)
-
-            # self.update_file_loading_status(
-            #     "Calculating summary parameters..."
-            # )
-            # # Calculate all required summary parameters
-            summary_parameters = [*IMPLEMENTED_SUMMARY_PARAMETERS.keys()]
-
-            for parameter in summary_parameters:
-                image.calculate_summary_parameter(parameter)
-
-            # Create visualizer and get image data
-            self.visualizer = Visualiser(image)
-            self.visualizer.get_image(60)
-            self.visualizer.get_ratioed_spectrum((100, 100))
-
-            # Store the image data
-            self.image_array = self.visualizer.raw_image_copy
-            self.ratioed_array = self.visualizer.ratioed_image_copy
-
-            # Initialize left plot
-            self.setup_left_plot()
-
-            # Initialize right plot
-            self.setup_right_plot()
-
-            # Initialize controls
-            num_channels = self.image_array.shape[2]
-            self.setup_controls(summary_parameters, num_channels)
-
-            # Update the display
-            self.update_left_plot("Initialization")
-
-            # Reset right plot
-            self.ax_right.clear()
-            self.ax_right.set_title("Channel View")
-            self.canvas_right.draw()
-
-            # self.file_window.destroy()
+            thread = threading.Thread(target=self.load_image, args=(filepath,))
+            thread.start()
+            check_thread_state(thread)
 
         except Exception as e:
-            self.ax_left.clear()
-            self.ax_left.set_title(f"Error loading image: {str(e)}")
-            self.canvas_left.draw()
+            self.update_file_loading_status(f"Error loading image: {str(e)}")
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ChannelViewer(
         root,
-        (
-            "/home/rob_platt/CRISM_classifier_application/data/"
-            "FRT00009A16_07_IF166L_TRR3.img"
-        ),
+        # (
+        #     "/home/rob_platt/CRISM_classifier_application/data/"
+        #     "FRT00009A16_07_IF166L_TRR3.img"
+        # ),
     )
     root.mainloop()
