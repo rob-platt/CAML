@@ -3,10 +3,12 @@ from tkinter import filedialog, ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
 )
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import onnxruntime
 import threading
+from PIL import Image, ImageTk
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
@@ -14,7 +16,7 @@ from n2n4m.summary_parameters import IMPLEMENTED_SUMMARY_PARAMETERS
 from n2n4m.n2n4m_denoise import clip_bands
 from n2n4m.preprocessing import impute_bad_values_in_image
 
-from classification_plot import convert_to_coords_filter_regions_by_conf
+from classification_plot import convert_to_coords_filter_regions_by_conf, CLASS_NAMES
 
 RATIO_DATA = "/home/rob_platt/pixel_classifier/data/CRISM_ML"
 
@@ -39,7 +41,6 @@ class ChannelViewer:
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
-        self.plot_frame.rowconfigure(1, weight=1)
 
         if filepath:
             self.filepath = filepath
@@ -345,9 +346,33 @@ class ChannelViewer:
                 continue
             if len(coords) > 1:
                 self.ax_left.scatter(
-                    coords[0], coords[1], s=0.1, label=mineral
+                    coords[0], coords[1], s=0.1, label=CLASS_NAMES[mineral]
                 )
         self.canvas_left.draw()
+        self.plot_classification_legend()
+
+    def plot_classification_legend(self):
+        """Plot legend for class predictions across base of plot frame."""
+        legend_frame = tk.Frame(self.plot_frame)
+        legend_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+
+        legend_fig = Figure(figsize=(16, 0.5))
+        legend_ax = legend_fig.add_subplot(111)
+        legend_ax.axis("off")
+
+        legend_ax.legend(
+            *self.ax_left.get_legend_handles_labels(),
+            loc="center",
+            frameon=False,
+            ncol=10,
+            markerscale=10,
+        )
+
+        legend_frame_canvas = FigureCanvasTkAgg(
+            legend_fig, master=legend_frame
+        )
+        legend_frame_canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        legend_frame_canvas.draw()
 
     def toggle_classification(self):
         """Plot classification results on top of the left plot."""
@@ -498,7 +523,7 @@ class ChannelViewer:
                 self.ax_right.set_title("Channel View")
                 self.canvas_right.draw()
 
-                self.file_window.destroy()
+                # self.file_window.destroy()
                 self.loading_window.destroy()
             else:
                 self.root.after(1000, check_thread_state, thread)
@@ -516,9 +541,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = ChannelViewer(
         root,
-        # (
-        #     "/home/rob_platt/CRISM_classifier_application/data/"
-        #     "FRT00009A16_07_IF166L_TRR3.img"
-        # ),
+        (
+            "/home/rob_platt/CRISM_classifier_application/data/"
+            "FRT00009A16_07_IF166L_TRR3.img"
+        ),
     )
     root.mainloop()

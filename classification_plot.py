@@ -33,6 +33,48 @@ mineral_colours = {
 }
 
 
+CLASS_NAMES = {
+    0: "CO2 Ice",  # co2_ice
+    1: "H2O Ice",  # h20_ice
+    2: "Gypsum",  # gypsum
+    3: "Ferric Hydroxysulfate",  # hydrox_fe_sulf
+    4: "Hematite",  # hematite
+    5: "Nontronite",  # fe_smectite
+    6: "Saponite",  # mg_smectite
+    7: "Prehnite",  # Prehnite Zeolite # prehnite
+    8: "Jarosite",  # jarosite
+    9: "Serpentine",  # serpentine
+    10: "Alunite",  # alunite
+    11: "Akaganeite",  # Fe Oxyhydroxysulfate # hydrox_fe_sulf
+    12: "Ca/Fe CO3",  # Calcite, Ca/Fe carbonate  # fe_ca_carbonate
+    13: "Beidellite",  # Al-smectite # al_smectite
+    14: "Kaolinite",  # kaolinite
+    15: "Bassanite",  # bassanite
+    16: "Epidote",  # epidote
+    17: "Montmorillonite",  # Al-smectite # al_smectite
+    18: "Rosenite",  # Polyhydrated sulfate # poly_hyd_sulf
+    19: "Mg Cl salt",  # Mg(ClO3)2.6H2O # Polyhydrated sulfate # poly_hyd_sulf
+    20: "Halloysite",  # Kaolinite # kaolinite
+    21: "Bland",  # Neutral/no spectral features
+    22: "Illite/Muscovite",  # illite_muscovite
+    23: "Margarite",  # Illite/Muscovite # illite_muscovite
+    24: "Analcime",  # Zeolite # analcime
+    25: "Monohydrated sulfate",  # Szomolnokite # mono_hyd_sulf
+    26: "Opal 1",  # Opal # Hydrated silica # hydrated_silica
+    27: "Opal 2",  # Opal-A # Hydrated silica # hydrated_silica
+    28: "Iron Oxide Silicate Sulfate",  # Polyhydrated sulfate # poly_hyd_sulf
+    29: "MgCO3",  # Magnesite # mg_carbonate
+    30: "Chlorite",  # chlorite
+    31: "Clinochlore",  # chlorite
+    32: "Low Ca Pyroxene",  # lcp
+    33: "Olivine Forsterite",  # mg_olivine
+    34: "High Ca Pyroxene",  # hcp
+    35: "Olivine Fayalite",  # fe_olivine
+    36: "Chloride",  # chloride
+    37: "Artefact",  # Camera artefact described in Leask et al. 2018
+}
+
+
 def preds_to_coords(preds: np.ndarray, min_size: int = 0) -> np.ndarray:
     """Convert a 2D array of predictions to a list of coordinates.
     Optionally filter by minimum size of connected component.
