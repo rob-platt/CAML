@@ -3,12 +3,11 @@ from tkinter import filedialog, ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
 )
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import onnxruntime
 import threading
-from PIL import Image, ImageTk
+import os
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
@@ -20,23 +19,26 @@ from n2n4m.wavelengths import ALL_WAVELENGTHS
 from classification_plot import (
     convert_to_coords_filter_regions_by_conf,
     CLASS_NAMES,
+    mineral_colours,
 )
 from CustomSlider import Slider
 
 RATIO_DATA = "/home/rob_platt/pixel_classifier/data/CRISM_ML"
 
 
-class ChannelViewer:
+class CAMEL:
     def __init__(self, root, filepath: str = None):
-        """Initialize the Channel Viewer GUI.
+        """Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
         If image filepath passed, image loading prompt is skipped.
         """
         self.root = root
-        self.root.title("Channel Viewer GUI")
-        self.hover_paused = False
-        self.show_classification = True
+        self.root.title("CAMEL")
+        self.hover_paused: bool = False
+        self.show_classification: bool = True
+        self.classification_flag: bool = False
         self.x_pos: int = 0
         self.y_pos: int = 0
+        self.filepath: str = None
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -54,10 +56,30 @@ class ChannelViewer:
             self.filepath = filepath
             self.load_image_subroutine(filepath)
         else:
-            self.prompt_file_selection()
+            self.prompt_crism_ml_file_selection()
 
-    def prompt_file_selection(self):
-        """Open a separate window to prompt file selection on launch."""
+    def prompt_crism_ml_file_selection(self):
+        """Open a separate window to prompt CRISM_ML dataset
+         directory selection on launch."""
+        self.crism_ml_dataset_window = tk.Toplevel(self.root)
+        self.crism_ml_dataset_window.title("Select CRISM_ML Dataset Directory")
+        self.crism_ml_dataset_window.geometry("300x100")
+
+        self.crism_ml_dataset_label = tk.Label(
+            self.crism_ml_dataset_window, text="Please select the CRISM_ML dataset directory."
+        )
+        self.crism_ml_dataset_label.place(relx=0.5, rely=0.3, anchor="center")
+
+        crism_ml_dataset_button = tk.Button(
+            self.crism_ml_dataset_window,
+            text="Choose Dataset Directory",
+            command=self.crism_ml_dataset_selection,
+        )
+        crism_ml_dataset_button.place(relx=0.5, rely=0.5, anchor="center")
+
+    def prompt_image_file_selection(self):
+        """Open a separate window to prompt image file selection
+            after CRISM_ML dataset selection."""
         self.file_window = tk.Toplevel(self.root)
         self.file_window.title("Select an Image File")
         self.file_window.geometry("300x100")
@@ -74,6 +96,15 @@ class ChannelViewer:
 
         self.file_window_label.place(relx=0.5, rely=0.3, anchor="center")
         file_button.place(relx=0.5, rely=0.5, anchor="center")
+
+    def crism_ml_dataset_selection(self):
+        """Open file dialog to select the CRISM_ML dataset."""
+        self.crism_ml_dataset = filedialog.askdirectory(
+            title="Select CRISM_ML Dataset",
+        )
+        if self.crism_ml_dataset:
+            self.crism_ml_dataset_window.destroy()
+            self.prompt_image_file_selection()
 
     def update_file_loading_status(self, status_message: str):
         """Update file loading and image processing status in the GUI."""
@@ -150,11 +181,11 @@ class ChannelViewer:
         self.control_frame = tk.Frame(self.root)
         self.control_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
-        # File selection button
-        file_button = tk.Button(
-            self.control_frame, text="Choose File", command=self.load_image
-        )
-        file_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+        # # File selection button
+        # file_button = tk.Button(
+        #     self.control_frame, text="Choose File", command=self.load_image
+        # )
+        # file_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Dropdown menu for image selection
         summary_params.append("Ratioed Image Channel")
@@ -214,7 +245,7 @@ class ChannelViewer:
         spectrum_slider_label = tk.Label(
             self.control_frame, text="Spectrum Wavelength Range:"
         )
-        spectrum_slider_label.grid(row=0, column=13, padx=5, sticky="nsew")
+        spectrum_slider_label.grid(row=0, column=14, padx=5, sticky="nsew")
 
         # Slider to control x-axis range of spectrum plot
         self.spectrum_range_slider = Slider(
@@ -231,9 +262,9 @@ class ChannelViewer:
             self.update_right_plot
         )
         self.spectrum_range_slider.grid(
-            row=1, column=13, columnspan=2, padx=5, sticky="e"
+            row=1, column=14, columnspan=2, padx=5, sticky="e"
         )
-        self.control_frame.columnconfigure(12, weight=1)
+        self.control_frame.columnconfigure(13, weight=1)
 
     def update_left_plot(self, event):
         image_selection = self.image_selection_dropdown.get()
@@ -271,6 +302,25 @@ class ChannelViewer:
             if event.inaxes == self.ax_left:
                 self.x_pos, self.y_pos = int(event.xdata), int(event.ydata)
 
+        line_col = "black"
+
+        if self.classification_flag:
+            conf = self.pred_conf[self.y_pos, self.x_pos]
+            cls = self.pred_cls[self.y_pos, self.x_pos]
+            cls_name = CLASS_NAMES[cls]
+            # check if cls in self.pred_coords
+            if len(self.pred_coords[cls]) > 1:
+                # Check if the current pixel is in the coordinates for the
+                # class and therefore survived the filtering
+                if (
+                    self.x_pos in self.pred_coords[cls][0]
+                    and self.y_pos in self.pred_coords[cls][1]
+                ):
+                    try:
+                        line_col = mineral_colours[cls_name]
+                    except KeyError:
+                        line_col = "black"
+
         if self.hover_paused or event.inaxes == self.ax_left:
             self.ax_right.clear()
             self.min_wavelength_idx = int(
@@ -288,12 +338,18 @@ class ChannelViewer:
                     self.x_pos,
                     self.min_wavelength_idx : self.max_wavelength_idx,
                 ],
-            )
-            self.ax_right.set_title(
-                f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot"
+                color=line_col,
             )
             self.ax_right.set_xlabel("Wavelength (μm)")
             self.ax_right.set_ylabel("Ratioed I/F")
+            if self.classification_flag:
+                self.ax_right.set_title(
+                    f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot\nClass: {cls_name}, Confidence: {conf*100:.2f}%"
+                )
+            else:
+                self.ax_right.set_title(
+                    f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot"
+                )
             self.canvas_right.draw()
 
     def display_loading_window(self, message: str):
@@ -317,10 +373,12 @@ class ChannelViewer:
 
     def add_classification_controls(self):
         """Add controls for classification results to control panel."""
+        # Add button for toggling display of classification results
         self.toggle_classification_button = tk.Button(
             self.control_frame,
             text="Classification Results (Off)",
             command=self.toggle_classification,
+            wraplength=100,
         )
         self.toggle_classification_button.grid(
             row=0, column=4, rowspan=2, padx=5, sticky="nsew"
@@ -331,6 +389,7 @@ class ChannelViewer:
         )
         filtering_label.grid(row=0, column=5, padx=5, sticky="nesw")
 
+        # Add slider for confidence threshold
         self.confidence_slider = tk.Scale(
             self.control_frame,
             from_=0,
@@ -346,6 +405,7 @@ class ChannelViewer:
             row=1, column=5, columnspan=3, padx=5, sticky="nsw"
         )
 
+        # Add slider for connected components threshold
         self.connect_comp_slider = tk.Scale(
             self.control_frame,
             from_=0,
@@ -361,6 +421,7 @@ class ChannelViewer:
             row=1, column=8, columnspan=3, padx=5, sticky="nsw"
         )
 
+        # Add button to run filtering
         self.run_filtering_button = tk.Button(
             self.control_frame,
             text="Run Filtering",
@@ -369,6 +430,12 @@ class ChannelViewer:
         self.run_filtering_button.grid(
             row=0, column=11, rowspan=2, padx=5, sticky="nsw"
         )
+
+        # Add button to save the image
+        self.save_button = tk.Button(
+            self.control_frame, text="Save Image", command=self.save_file
+        )
+        self.save_button.grid(row=0, column=12, rowspan=2, padx=5, sticky="nsw")
 
     def classification_filter(self):
         """Filter classification results based on confidence threshold,
@@ -400,9 +467,20 @@ class ChannelViewer:
             if mineral == 1:
                 continue
             if len(coords) > 1:
-                self.ax_left.scatter(
-                    coords[0], coords[1], s=0.1, label=CLASS_NAMES[mineral]
-                )
+                # If a custom colour is defined for the mineral, use it
+                try:
+                    self.ax_left.scatter(
+                        coords[0],
+                        coords[1],
+                        s=0.1,
+                        label=CLASS_NAMES[mineral],
+                        color=mineral_colours[CLASS_NAMES[mineral]],
+                    )
+                # Otherwise, use the default colours
+                except KeyError:
+                    self.ax_left.scatter(
+                        coords[0], coords[1], s=0.1, label=CLASS_NAMES[mineral]
+                    )
         self.canvas_left.draw()
         self.plot_classification_legend()
 
@@ -534,6 +612,7 @@ class ChannelViewer:
                 self.toggle_classification()
                 self.classification_button.config(state="disabled")
                 self.loading_window.destroy()
+                self.classification_flag = True
             else:
                 self.root.after(1000, check_thread_state, thread)
 
@@ -542,7 +621,7 @@ class ChannelViewer:
     def load_image(self, filepath):
         """Load the CRISM image from the given filepath."""
         image = CRISMImage(filepath)
-        image.ratio_image(RATIO_DATA)
+        image.ratio_image(self.crism_ml_dataset)
         summary_parameters = [*IMPLEMENTED_SUMMARY_PARAMETERS.keys()]
 
         for parameter in summary_parameters:
@@ -561,50 +640,77 @@ class ChannelViewer:
     def load_image_subroutine(self, filepath=None):
         # Open file dialog and get file path
         if not filepath:
-            filepath = filedialog.askopenfilename(
+            self.filepath = filedialog.askopenfilename(
                 title="Select CRISM Image",
                 filetypes=[("IMG files", "*.img"), ("All files", "*.*")],
             )
+        if self.filepath:
+            self.display_loading_window("Loading image...")
 
-        self.display_loading_window("Loading image...")
+            def check_thread_state(thread):
+                """Check the state of the thread"""
+                if not thread.is_alive():
+                    self.setup_left_plot()
+                    self.setup_right_plot()
+                    num_channels = self.image_array.shape[2]
+                    self.setup_controls(self.summary_parameters, num_channels)
 
-        def check_thread_state(thread):
-            """Check the state of the thread"""
-            if not thread.is_alive():
-                self.setup_left_plot()
-                self.setup_right_plot()
-                num_channels = self.image_array.shape[2]
-                self.setup_controls(self.summary_parameters, num_channels)
+                    # Update the display
+                    self.update_left_plot("Initialization")
 
-                # Update the display
-                self.update_left_plot("Initialization")
+                    # Reset right plot
+                    self.ax_right.clear()
+                    self.ax_right.set_title("Channel View")
+                    self.canvas_right.draw()
 
-                # Reset right plot
-                self.ax_right.clear()
-                self.ax_right.set_title("Channel View")
-                self.canvas_right.draw()
+                    self.file_window.destroy()
+                    self.loading_window.destroy()
+                else:
+                    self.root.after(1000, check_thread_state, thread)
 
-                # self.file_window.destroy()
-                self.loading_window.destroy()
-            else:
-                self.root.after(1000, check_thread_state, thread)
+            try:
+                thread = threading.Thread(target=self.load_image, args=(self.filepath,))
+                thread.start()
+                check_thread_state(thread)
 
-        try:
-            thread = threading.Thread(target=self.load_image, args=(filepath,))
-            thread.start()
-            check_thread_state(thread)
+            except Exception as e:
+                self.update_file_loading_status(f"Error loading image: {str(e)}")
 
-        except Exception as e:
-            self.update_file_loading_status(f"Error loading image: {str(e)}")
+    def save_file(self):
+        """Save the image and currently displayed classification results to
+        file."""
+        save_dir = filedialog.askdirectory(title="Select Save Directory")
+
+        if save_dir:
+            # Make an image layer of the classification results
+            pred_im_filtered = np.full_like(self.pred_cls, 65535.0)
+            for mineral, coords in self.pred_coords.items():
+                if len(coords) > 0:
+                    pred_im_filtered[coords[1], coords[0]] = mineral
+
+            output_image = np.zeros((self.image_array.shape), dtype="float32")
+            output_image[:] = self.image_array
+            # encode any bad values
+            output_image[np.isnan(output_image)] = 65535.0
+            output_image[output_image < 0] = 65535.0
+            output_image[output_image > 1000] = 65535.0
+
+            output_image[:, :, -2] = pred_im_filtered
+            output_image[:, :, -1] = self.pred_conf
+
+            output_image = output_image.astype("float32")
+
+            image_name = self.filepath.split("/")[-1].split(".")[0]
+            self.visualizer.image.write_image(
+                os.path.join(save_dir, image_name + ".hdr"),
+                output_image,
+                reverse_bands=True,
+            )
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ChannelViewer(
+    app = CAMEL(
         root,
-        (
-            "/home/rob_platt/CRISM_classifier_application/data/"
-            "FRT00009A16_07_IF166L_TRR3.img"
-        ),
     )
     root.mainloop()
