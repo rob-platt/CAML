@@ -15,8 +15,13 @@ from n2n4m.crism_image import CRISMImage
 from n2n4m.summary_parameters import IMPLEMENTED_SUMMARY_PARAMETERS
 from n2n4m.n2n4m_denoise import clip_bands
 from n2n4m.preprocessing import impute_bad_values_in_image
+from n2n4m.wavelengths import ALL_WAVELENGTHS
 
-from classification_plot import convert_to_coords_filter_regions_by_conf, CLASS_NAMES
+from classification_plot import (
+    convert_to_coords_filter_regions_by_conf,
+    CLASS_NAMES,
+)
+from CustomSlider import Slider
 
 RATIO_DATA = "/home/rob_platt/pixel_classifier/data/CRISM_ML"
 
@@ -30,6 +35,8 @@ class ChannelViewer:
         self.root.title("Channel Viewer GUI")
         self.hover_paused = False
         self.show_classification = True
+        self.x_pos: int = 0
+        self.y_pos: int = 0
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -41,6 +48,7 @@ class ChannelViewer:
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
+        self.plot_frame.rowconfigure(1, weight=3)
 
         if filepath:
             self.filepath = filepath
@@ -86,7 +94,9 @@ class ChannelViewer:
         self.canvas_left.get_tk_widget().columnconfigure(0, weight=1)
         self.canvas_left.get_tk_widget().rowconfigure(0, weight=1)
 
-        self.canvas_left.mpl_connect("motion_notify_event", self.on_hover)
+        self.canvas_left.mpl_connect(
+            "motion_notify_event", self.update_right_plot
+        )
         self.canvas_left.mpl_connect("button_press_event", self.toggle_hover)
 
     def setup_right_plot(self):
@@ -97,7 +107,7 @@ class ChannelViewer:
 
         self.fig_right = Figure(figsize=(8, 4))
         self.ax_right = self.fig_right.add_subplot(111)
-        self.ax_right.set_title("Channel View")
+        self.ax_right.set_title("Spectrum Plot")
 
         self.canvas_right = FigureCanvasTkAgg(
             self.fig_right, master=right_frame
@@ -168,7 +178,7 @@ class ChannelViewer:
         image_selection_label = tk.Label(
             self.control_frame, text="Image Selection:"
         )
-        image_selection_label.grid(row=0, column=1, padx=5, sticky="nsew")
+        image_selection_label.grid(row=0, column=1, padx=5)  # sticky="nsew")
 
         # Dropdown menu for channel selection
         self.channel_dropdown = ttk.Combobox(
@@ -183,7 +193,7 @@ class ChannelViewer:
         self.channel_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
-        self.channel_dropdown.grid(row=1, column=2, padx=5, sticky="nsew")
+        self.channel_dropdown.grid(row=1, column=2, padx=5)  # sticky="nsew")
         channel_label = tk.Label(
             self.control_frame, text="Image Channel Selection:"
         )
@@ -200,6 +210,30 @@ class ChannelViewer:
         self.classification_button.grid(
             row=0, column=3, rowspan=2, padx=5, sticky="nsew"
         )
+
+        spectrum_slider_label = tk.Label(
+            self.control_frame, text="Spectrum Wavelength Range:"
+        )
+        spectrum_slider_label.grid(row=0, column=13, padx=5, sticky="nsew")
+
+        # Slider to control x-axis range of spectrum plot
+        self.spectrum_range_slider = Slider(
+            self.control_frame,
+            width=200,
+            height=20,
+            min_val=0,
+            max_val=len(ALL_WAVELENGTHS),
+            step_size=1,
+            init_lis=[0, len(ALL_WAVELENGTHS)],
+            show_value=True,
+        )
+        self.spectrum_range_slider.setValueChangeCallback(
+            self.update_right_plot
+        )
+        self.spectrum_range_slider.grid(
+            row=1, column=13, columnspan=2, padx=5, sticky="e"
+        )
+        self.control_frame.columnconfigure(12, weight=1)
 
     def update_left_plot(self, event):
         image_selection = self.image_selection_dropdown.get()
@@ -229,15 +263,36 @@ class ChannelViewer:
             self.hover_paused = not self.hover_paused
             status = "Paused" if self.hover_paused else "Active"
             self.ax_right.set_title(f"Channel View ({status})")
+            self.x_pos, self.y_pos = int(event.xdata), int(event.ydata)
             self.canvas_right.draw()
 
-    def on_hover(self, event):
-        if not self.hover_paused and event.inaxes == self.ax_left:
-            x, y = int(event.xdata), int(event.ydata)
+    def update_right_plot(self, event):
+        if not self.hover_paused:
+            if event.inaxes == self.ax_left:
+                self.x_pos, self.y_pos = int(event.xdata), int(event.ydata)
+
+        if self.hover_paused or event.inaxes == self.ax_left:
             self.ax_right.clear()
-            self.ax_right.plot(self.ratioed_array[y, x, :])
-            self.ax_right.set_title("Pixel ({}, {}) Channel View".format(x, y))
-            self.ax_right.set_xlabel("Channel")
+            self.min_wavelength_idx = int(
+                self.spectrum_range_slider.getValues()[0]
+            )
+            self.max_wavelength_idx = int(
+                self.spectrum_range_slider.getValues()[1]
+            )
+            self.ax_right.plot(
+                ALL_WAVELENGTHS[
+                    self.min_wavelength_idx : self.max_wavelength_idx
+                ],
+                self.ratioed_array[
+                    self.y_pos,
+                    self.x_pos,
+                    self.min_wavelength_idx : self.max_wavelength_idx,
+                ],
+            )
+            self.ax_right.set_title(
+                f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot"
+            )
+            self.ax_right.set_xlabel("Wavelength (μm)")
             self.ax_right.set_ylabel("Ratioed I/F")
             self.canvas_right.draw()
 
@@ -288,7 +343,7 @@ class ChannelViewer:
         )
         self.confidence_slider.set(0.0)
         self.confidence_slider.grid(
-            row=1, column=5, columnspan=3, padx=5, sticky="nesw"
+            row=1, column=5, columnspan=3, padx=5, sticky="nsw"
         )
 
         self.connect_comp_slider = tk.Scale(
@@ -303,7 +358,7 @@ class ChannelViewer:
         )
         self.connect_comp_slider.set(0)
         self.connect_comp_slider.grid(
-            row=1, column=8, columnspan=3, padx=5, sticky="nsew"
+            row=1, column=8, columnspan=3, padx=5, sticky="nsw"
         )
 
         self.run_filtering_button = tk.Button(
@@ -312,7 +367,7 @@ class ChannelViewer:
             command=self.classification_filter,
         )
         self.run_filtering_button.grid(
-            row=0, column=11, rowspan=2, padx=5, sticky="nsew"
+            row=0, column=11, rowspan=2, padx=5, sticky="nsw"
         )
 
     def classification_filter(self):
@@ -355,6 +410,8 @@ class ChannelViewer:
         """Plot legend for class predictions across base of plot frame."""
         legend_frame = tk.Frame(self.plot_frame)
         legend_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        legend_frame.columnconfigure(0, weight=1)
+        legend_frame.rowconfigure(0, weight=1)
 
         legend_fig = Figure(figsize=(16, 0.5))
         legend_ax = legend_fig.add_subplot(111)
@@ -371,7 +428,11 @@ class ChannelViewer:
         legend_frame_canvas = FigureCanvasTkAgg(
             legend_fig, master=legend_frame
         )
-        legend_frame_canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        legend_frame_canvas.get_tk_widget().grid(
+            row=0, column=0, sticky="nsew"
+        )
+        legend_frame_canvas.get_tk_widget().columnconfigure(0, weight=1)
+        legend_frame_canvas.get_tk_widget().rowconfigure(0, weight=1)
         legend_frame_canvas.draw()
 
     def toggle_classification(self):
