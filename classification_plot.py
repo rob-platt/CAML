@@ -112,7 +112,7 @@ def convert_to_coords_filter_regions_by_conf(
     confidence_scores: np.ndarray,
     min_area: int = 0,
     min_confidence: float = 0.0,
-) -> np.ndarray:
+) -> dict:
     """Convert mineral prediction to dictionary of per-class coordinates.
     Optionally filter by minimum area of connected components of a single class
     and minimum model confidence score, averaged across the connected
