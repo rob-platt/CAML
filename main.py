@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
+    NavigationToolbar2Tk,
 )
 from matplotlib.figure import Figure
 import numpy as np
@@ -60,13 +61,14 @@ class CAMEL:
 
     def prompt_crism_ml_file_selection(self):
         """Open a separate window to prompt CRISM_ML dataset
-         directory selection on launch."""
+        directory selection on launch."""
         self.crism_ml_dataset_window = tk.Toplevel(self.root)
         self.crism_ml_dataset_window.title("Select CRISM_ML Dataset Directory")
         self.crism_ml_dataset_window.geometry("300x100")
 
         self.crism_ml_dataset_label = tk.Label(
-            self.crism_ml_dataset_window, text="Please select the CRISM_ML dataset directory."
+            self.crism_ml_dataset_window,
+            text="Please select the CRISM_ML dataset directory.",
         )
         self.crism_ml_dataset_label.place(relx=0.5, rely=0.3, anchor="center")
 
@@ -79,7 +81,7 @@ class CAMEL:
 
     def prompt_image_file_selection(self):
         """Open a separate window to prompt image file selection
-            after CRISM_ML dataset selection."""
+        after CRISM_ML dataset selection."""
         self.file_window = tk.Toplevel(self.root)
         self.file_window.title("Select an Image File")
         self.file_window.geometry("300x100")
@@ -124,6 +126,14 @@ class CAMEL:
         self.canvas_left.get_tk_widget().grid(row=0, column=0, sticky="nesw")
         self.canvas_left.get_tk_widget().columnconfigure(0, weight=1)
         self.canvas_left.get_tk_widget().rowconfigure(0, weight=1)
+
+        # Add Zoom & Pan Toolbar
+        toolbar_frame = tk.Frame(left_frame)
+        toolbar_frame.grid(
+            row=1, column=0, sticky="ew"
+        )  # Place toolbar below plot
+        toolbar = NavigationToolbar2Tk(self.canvas_left, toolbar_frame)
+        toolbar.update()
 
         self.canvas_left.mpl_connect(
             "motion_notify_event", self.update_right_plot
@@ -300,7 +310,14 @@ class CAMEL:
     def update_right_plot(self, event):
         if not self.hover_paused:
             if event.inaxes == self.ax_left:
-                self.x_pos, self.y_pos = int(event.xdata), int(event.ydata)
+                x_pos, y_pos = int(event.xdata), int(event.ydata)
+                if (
+                    (x_pos > 0)
+                    and (x_pos < self.image_array.shape[1] - 1)
+                    and (y_pos > 0)
+                    and (y_pos < self.image_array.shape[0] - 1)
+                ):
+                    self.x_pos, self.y_pos = x_pos, y_pos
 
         line_col = "black"
 
@@ -435,7 +452,9 @@ class CAMEL:
         self.save_button = tk.Button(
             self.control_frame, text="Save Image", command=self.save_file
         )
-        self.save_button.grid(row=0, column=12, rowspan=2, padx=5, sticky="nsw")
+        self.save_button.grid(
+            row=0, column=12, rowspan=2, padx=5, sticky="nsw"
+        )
 
     def classification_filter(self):
         """Filter classification results based on confidence threshold,
@@ -469,20 +488,37 @@ class CAMEL:
             if len(coords) > 1:
                 # If a custom colour is defined for the mineral, use it
                 try:
-                    self.ax_left.scatter(
+                    self.scatter = self.ax_left.scatter(
                         coords[0],
                         coords[1],
-                        s=0.1,
+                        s=0.75,
+                        marker="s",
                         label=CLASS_NAMES[mineral],
                         color=mineral_colours[CLASS_NAMES[mineral]],
                     )
                 # Otherwise, use the default colours
                 except KeyError:
-                    self.ax_left.scatter(
-                        coords[0], coords[1], s=0.1, label=CLASS_NAMES[mineral]
+                    self.scatter = self.ax_left.scatter(
+                        coords[0],
+                        coords[1],
+                        s=0.75,
+                        label=CLASS_NAMES[mineral],
+                        marker="s",
                     )
+        # self.ax_left.callbacks.connect("xlim_changed", self.update_marker_size)
+        # self.ax_left.callbacks.connect("ylim_changed", self.update_marker_size)
         self.canvas_left.draw()
         self.plot_classification_legend()
+
+    # def update_marker_size(self, event=None):
+    #     if event == "xlim_changed" or event == "ylim_changed":
+    #         xlim = self.ax_left.get_xlim()
+    #         # Compute the new marker size based on pixel scaling
+    #         pixel_width = (xlim[1] - xlim[0]) / 10  # Adjust based on the image resolution
+    #         new_size = (pixel_width ** 2)  # Scale factor to match original size
+    #         print(new_size)
+    #         self.scatter.set_sizes([new_size] * len(self.scatter.get_offsets()))  # Update sizes
+    #         self.canvas_left.draw_idle()
 
     def plot_classification_legend(self):
         """Plot legend for class predictions across base of plot frame."""
@@ -669,12 +705,16 @@ class CAMEL:
                     self.root.after(1000, check_thread_state, thread)
 
             try:
-                thread = threading.Thread(target=self.load_image, args=(self.filepath,))
+                thread = threading.Thread(
+                    target=self.load_image, args=(self.filepath,)
+                )
                 thread.start()
                 check_thread_state(thread)
 
             except Exception as e:
-                self.update_file_loading_status(f"Error loading image: {str(e)}")
+                self.update_file_loading_status(
+                    f"Error loading image: {str(e)}"
+                )
 
     def save_file(self):
         """Save the image and currently displayed classification results to
