@@ -173,5 +173,8 @@ cython_debug/
 # data files
 data/
 
+# configuration files
+*config.json
+
 # development nb
 dev.ipynb

@@ -8,6 +8,7 @@ from matplotlib.figure import Figure
 import numpy as np
 import onnxruntime
 import threading
+import json
 import os
 
 from n2n4m.plot import Visualiser
@@ -24,9 +25,12 @@ from classification_plot import (
 )
 from CustomSlider import Slider
 
+MODEL_PATH = "vae_classifier_1024.onnx"
+CONFIG_PATH = "CAMEL_config.json"
+
 
 class CAMEL:
-    def __init__(self, root, filepath: str = None):
+    def __init__(self, root):
         """Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
         If image filepath passed, image loading prompt is skipped.
         """
@@ -38,6 +42,7 @@ class CAMEL:
         self.x_pos: int = 0
         self.y_pos: int = 0
         self.filepath: str = None
+        self.config: dict = {}
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -49,24 +54,40 @@ class CAMEL:
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
-        # self.plot_frame.rowconfigure(1, weight=1)
 
-        if filepath:
-            self.filepath = filepath
-            self.load_image_subroutine(filepath)
+        if self.load_config():
+            self.crism_ml_dataset = self.config["crism_ml_dataset_dir"]
+            if not self.check_bland_mat_file():
+                self.crism_ml_dataset = None
+                self.prompt_crism_ml_file_selection()
+            else:
+                self.prompt_image_file_selection()
         else:
             self.prompt_crism_ml_file_selection()
+
+    def load_config(self):
+        """Check if the config file exists, if yes then load it."""
+        if not os.path.exists(CONFIG_PATH):
+            return False
+        with open(CONFIG_PATH, "r") as f:
+            self.config = json.load(f)
+        return True
+
+    def write_config(self):
+        """Write the current configuration to the config file."""
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(self.config, f)
 
     def prompt_crism_ml_file_selection(self):
         """Open a separate window to prompt CRISM_ML dataset
         directory selection on launch."""
         self.crism_ml_dataset_window = tk.Toplevel(self.root)
-        self.crism_ml_dataset_window.title("Select CRISM_ML Dataset Directory")
+        self.crism_ml_dataset_window.title("Select CRISM_ML Dataset File")
         self.crism_ml_dataset_window.geometry("300x100")
 
         self.crism_ml_dataset_label = tk.Label(
             self.crism_ml_dataset_window,
-            text="Please select the CRISM_ML dataset directory.",
+            text="Please select the CRISM_ML dataset file.",
         )
         self.crism_ml_dataset_label.place(relx=0.5, rely=0.3, anchor="center")
 
@@ -97,14 +118,35 @@ class CAMEL:
         self.file_window_label.place(relx=0.5, rely=0.3, anchor="center")
         file_button.place(relx=0.5, rely=0.5, anchor="center")
 
+    def check_bland_mat_file(self):
+        """Check to see if the selected directory exists and
+        has the training data in it."""
+        if not os.path.exists(self.crism_ml_dataset):
+            return False
+        if not os.path.exists(
+            os.path.join(self.crism_ml_dataset, "CRISM_bland_unratioed.mat")
+        ):
+            return False
+        return True
+
     def crism_ml_dataset_selection(self):
         """Open file dialog to select the CRISM_ML dataset."""
-        self.crism_ml_dataset = filedialog.askdirectory(
+        self.crism_ml_dataset = filedialog.askopenfilename(
             title="Select CRISM_ML Dataset",
+            filetypes=[("MAT files", "*.mat"), ("All files", "*.*")],
         )
         if self.crism_ml_dataset:
-            self.crism_ml_dataset_window.destroy()
-            self.prompt_image_file_selection()
+            self.crism_ml_dataset = os.path.dirname(self.crism_ml_dataset)
+            if not self.check_bland_mat_file():
+                self.crism_ml_dataset = None
+                self.crism_ml_dataset_label.config(
+                    text="Invalid file selected. Please try again."
+                )
+            else:
+                self.crism_ml_dataset_window.destroy()
+                self.config["crism_ml_dataset_dir"] = self.crism_ml_dataset
+                self.write_config()
+                self.prompt_image_file_selection()
 
     def update_file_loading_status(self, status_message: str):
         """Update file loading and image processing status in the GUI."""
@@ -369,7 +411,10 @@ class CAMEL:
             self.ax_right.set_ylabel("Ratioed I/F")
             if self.classification_flag:
                 self.ax_right.set_title(
-                    f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot\nClass: {cls_name}, Confidence: {conf*100:.2f}%"
+                    (
+                        f"Pixel ({self.x_pos}, {self.y_pos}) Spectrum Plot\n"
+                        f"Class: {cls_name}, Confidence: {conf*100:.2f}%"
+                    )
                 )
             else:
                 self.ax_right.set_title(
@@ -512,20 +557,8 @@ class CAMEL:
                         label=CLASS_NAMES[mineral],
                         marker="s",
                     )
-        # self.ax_left.callbacks.connect("xlim_changed", self.update_marker_size)
-        # self.ax_left.callbacks.connect("ylim_changed", self.update_marker_size)
         self.canvas_left.draw()
         self.plot_classification_legend()
-
-    # def update_marker_size(self, event=None):
-    #     if event == "xlim_changed" or event == "ylim_changed":
-    #         xlim = self.ax_left.get_xlim()
-    #         # Compute the new marker size based on pixel scaling
-    #         pixel_width = (xlim[1] - xlim[0]) / 10  # Adjust based on the image resolution
-    #         new_size = (pixel_width ** 2)  # Scale factor to match original size
-    #         print(new_size)
-    #         self.scatter.set_sizes([new_size] * len(self.scatter.get_offsets()))  # Update sizes
-    #         self.canvas_left.draw_idle()
 
     def plot_classification_legend(self):
         """Plot legend for class predictions across base of plot frame."""
@@ -616,9 +649,7 @@ class CAMEL:
         """Classify the CRISM cube using the CRISM Classifier model."""
 
         ort_session = onnxruntime.InferenceSession(
-            (
-                "vae_classifier_1024.onnx"
-            ),
+            (MODEL_PATH),
             providers=["CPUExecutionProvider"],
         )
 
