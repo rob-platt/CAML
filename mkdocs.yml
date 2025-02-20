@@ -1,5 +1,5 @@
-site_name: My Project
-site_url: https://imperialcollegelondon.github.io/myproject
+site_name: CAMEL
+site_url: https://rob-platt.github.io/CRISM_classifier_application/
 theme:
   name: material
   palette:

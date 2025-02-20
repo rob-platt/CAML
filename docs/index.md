@@ -1,18 +1,22 @@
-# Welcome to MkDocs
+# Welcome to CAMEL
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+The **C**RISM **A**nalysis using **M**achin**E** **L**earning (CAMEL) system exists to mineral identification in CRISM imagery using machine learning. This system is designed to be easy to use (no-code), platform agnostic, and to provide a high level of accuracy in mineral identification. It is designed for use by planetary science researchers, students, and enthusiasts.
 
-## Commands
+## Getting Started
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+To get started with CAMEL, you will need to install the system on your computer. This is available as a standalone desktop application, or as a Python package. The desktop application is recommended for users who are not familiar with Python, while the Python package is recommended for users who are familiar with Python and want to use CAMEL in their own scripts.
 
-## Project layout
+### Desktop Application
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
-    README.md     # Introduction to the repo.
+The desktop application is available for Windows, macOS, and Linux. To install the desktop application, download the appropriate installer from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases) and follow the installation instructions.
+
+### Python Package
+
+The Python package is available on [Github](https://github.com/rob-platt/CRISM_classifier_application).
+
+!!! warning
+    The Python package is currently in development and is not yet available for general use.
+
+!!! note
+    This python package only releases code for running inference of the ML model. A later release will include the model itself, preprocessing, and training code. 
+
