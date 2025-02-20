@@ -54,9 +54,6 @@ After classification has been completed, the predicted mineralogy will be displa
     * Minimum Confidence: Minimum confidence level to display prediction **averaged across the connected component**[^2].  
 - Run Filtering: This will apply the chosen filtering options (together) to the classification results.
 
-!!! bug
-    Switching image view can cause the mineralogy overlay to disappear. If this happens, simply toggle the classification results off and on again.
-
 ## Saving Results
 
 ### Saving Graphics
