@@ -20,3 +20,21 @@ The Python package is available on [Github](https://github.com/rob-platt/CRISM_c
 !!! note
     This python package only releases code for running inference of the ML model. A later release will include the model itself, preprocessing, and training code. 
 
+## Citation
+
+If you find this software useful, please cite the following paper:
+
+```
+@inproceedings{platt_automated_2024,
+	title = {Automated Classification of CRISM Spectra Using Hybrid Neural Networks},
+	language = {en},
+	booktitle = {Tenth International Conference on Mars 2024},
+    series = {LPI Contributions},
+    volume = {3007},
+	author = {Platt, R and Arcucci, R and John, C M},
+	year = {2024},
+    eid = {3166},
+    pages = {3166},
+    adsurl = {https://ui.adsabs.harvard.edu/abs/2024LPICo3007.3166P},
+}
+```
