@@ -24,9 +24,6 @@ from classification_plot import (
 )
 from CustomSlider import Slider
 
-RATIO_DATA = "/home/rob_platt/pixel_classifier/data/CRISM_ML"
-
-
 class CAMEL:
     def __init__(self, root, filepath: str = None):
         """Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
@@ -46,7 +43,7 @@ class CAMEL:
         root.rowconfigure(4, weight=0)
 
         # Create plot frame
-        self.plot_frame = tk.Frame(root)
+        self.plot_frame = tk.Frame(root, bg="white")
         self.plot_frame.grid(row=0, column=0, sticky="nesw")
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
@@ -141,19 +138,19 @@ class CAMEL:
         self.canvas_left.mpl_connect("button_press_event", self.toggle_hover)
 
     def setup_right_plot(self):
-        right_frame = tk.Frame(self.plot_frame)
+        right_frame = tk.Frame(self.plot_frame, bg="white")
         right_frame.grid(column=1, row=0, sticky="nsew")
         right_frame.columnconfigure(0, weight=1)
         right_frame.rowconfigure(0, weight=1)
 
-        self.fig_right = Figure(figsize=(8, 4))
+        self.fig_right = Figure(figsize=(8, 6))
         self.ax_right = self.fig_right.add_subplot(111)
         self.ax_right.set_title("Spectrum Plot")
 
         self.canvas_right = FigureCanvasTkAgg(
             self.fig_right, master=right_frame
         )
-        self.canvas_right.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.canvas_right.get_tk_widget().grid(row=0, column=0, sticky="ew")
         self.canvas_right.get_tk_widget().columnconfigure(0, weight=1)
         self.canvas_right.get_tk_widget().rowconfigure(0, weight=1)
 
@@ -608,7 +605,6 @@ class CAMEL:
 
         ort_session = onnxruntime.InferenceSession(
             (
-                "/home/rob_platt/CRISM_classifier_application/Notebooks/"
                 "vae_classifier_1024.onnx"
             ),
             providers=["CPUExecutionProvider"],
