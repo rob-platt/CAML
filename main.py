@@ -24,6 +24,7 @@ from classification_plot import (
 )
 from CustomSlider import Slider
 
+
 class CAMEL:
     def __init__(self, root, filepath: str = None):
         """Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
@@ -48,7 +49,7 @@ class CAMEL:
         self.plot_frame.columnconfigure(0, weight=1)
         self.plot_frame.columnconfigure(1, weight=1)
         self.plot_frame.rowconfigure(0, weight=1)
-        self.plot_frame.rowconfigure(1, weight=3)
+        # self.plot_frame.rowconfigure(1, weight=1)
 
         if filepath:
             self.filepath = filepath
@@ -195,7 +196,7 @@ class CAMEL:
         # file_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Dropdown menu for image selection
-        summary_params.append("Image Channel")
+        summary_params.insert(0, "Image Band")
         self.image_selection_dropdown = ttk.Combobox(
             self.control_frame,
             values=summary_params,
@@ -209,7 +210,7 @@ class CAMEL:
         self.image_selection_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
-        self.image_selection_dropdown.set("Image Channel")
+        self.image_selection_dropdown.set("Image Band")
         self.image_selection_dropdown.grid(
             row=1, column=1, padx=5, sticky="nsew"
         )
@@ -221,7 +222,8 @@ class CAMEL:
         # Dropdown menu for channel selection
         self.channel_dropdown = ttk.Combobox(
             self.control_frame,
-            values=list(range(num_channels)),
+            # We make the assumption that any missing channels are at the end
+            values=ALL_WAVELENGTHS[:num_channels],
             style="Custom.TCombobox",
         )
         self.channel_dropdown.bind(
@@ -275,7 +277,7 @@ class CAMEL:
 
     def update_left_plot(self, event):
         image_selection = self.image_selection_dropdown.get()
-        if image_selection == "Ratioed Image Channel":
+        if image_selection == "Image Band":
             if event == "Initialization":
                 selected_channel = 60
             else:
@@ -519,6 +521,8 @@ class CAMEL:
 
     def plot_classification_legend(self):
         """Plot legend for class predictions across base of plot frame."""
+        # Add an additional row to the plot frame for the legend to go in
+        self.plot_frame.rowconfigure(1, weight=1, minsize=120)
         legend_frame = tk.Frame(self.plot_frame)
         legend_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
         legend_frame.columnconfigure(0, weight=1)
