@@ -229,13 +229,13 @@ class CAMEL:
         self.channel_dropdown.bind(
             "<FocusIn>", lambda e: on_popdown_show(self.channel_dropdown)
         )
-        self.channel_dropdown.set(60)
+        self.channel_dropdown.set(ALL_WAVELENGTHS[60])
         self.channel_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
         self.channel_dropdown.grid(row=1, column=2, padx=5)  # sticky="nsew")
         channel_label = tk.Label(
-            self.control_frame, text="Image Channel Selection:"
+            self.control_frame, text="Image Band Selection:"
         )
         channel_label.grid(row=0, column=2, padx=5, sticky="nsew")
 
@@ -276,16 +276,25 @@ class CAMEL:
         self.control_frame.columnconfigure(13, weight=1)
 
     def update_left_plot(self, event):
+        """Update the left plot based on the selected image band or summary
+        parameter."""
+        # If want to update base image and then overlay classification
+        # rather than updating classification, do this to prevent
+        # double plotting or endless looping.
+        if self.classification_flag and event != "Plot Classification":
+            self.plot_classification()
+            return
         image_selection = self.image_selection_dropdown.get()
         if image_selection == "Image Band":
             if event == "Initialization":
-                selected_channel = 60
+                selected_channel = 1.394890
             else:
                 self.channel_dropdown.state(["!disabled"])
-                selected_channel = int(self.channel_dropdown.get())
+                selected_channel = self.channel_dropdown.get()
+            channel_idx = ALL_WAVELENGTHS.index(float(selected_channel))
             self.ax_left.clear()
             self.ax_left.imshow(
-                self.image_array[:, :, selected_channel], cmap="viridis"
+                self.image_array[:, :, channel_idx], cmap="viridis"
             )
             self.ax_left.set_title(f"Channel {selected_channel}")
         elif image_selection in IMPLEMENTED_SUMMARY_PARAMETERS:
@@ -478,7 +487,6 @@ class CAMEL:
         self.plot_classification()
 
     def plot_classification(self):
-        # clear left plot
         self.ax_left.clear()
         self.update_left_plot("Plot Classification")
         for mineral, coords in self.pred_coords.items():
