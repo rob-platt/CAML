@@ -195,7 +195,7 @@ class CAMEL:
         # file_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Dropdown menu for image selection
-        summary_params.append("Ratioed Image Channel")
+        summary_params.append("Image Channel")
         self.image_selection_dropdown = ttk.Combobox(
             self.control_frame,
             values=summary_params,
@@ -209,7 +209,7 @@ class CAMEL:
         self.image_selection_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
-        self.image_selection_dropdown.set("Ratioed Image Channel")
+        self.image_selection_dropdown.set("Image Channel")
         self.image_selection_dropdown.grid(
             row=1, column=1, padx=5, sticky="nsew"
         )
