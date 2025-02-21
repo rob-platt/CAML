@@ -97,6 +97,9 @@ class CAMEL:
         self.crism_ml_dataset_window.title("Select CRISM_ML Dataset File")
         self.crism_ml_dataset_window.geometry("300x100")
 
+        self.crism_ml_dataset_window.protocol(
+            "WM_DELETE_WINDOW", self.close_window)
+
         self.crism_ml_dataset_label = tk.Label(
             self.crism_ml_dataset_window,
             text="Please select the CRISM_ML dataset file.",
@@ -118,6 +121,8 @@ class CAMEL:
         self.file_window = tk.Toplevel(self.root)
         self.file_window.title("Select an Image File")
         self.file_window.geometry("300x100")
+
+        self.file_window.protocol("WM_DELETE_WINDOW", self.close_window)
 
         self.file_window_label = tk.Label(
             self.file_window, text="Please select an image file."
@@ -865,6 +870,11 @@ class CAMEL:
                 output_image,
                 reverse_bands=True,
             )
+
+    def close_window(self):
+        """Close the window and exit the program."""
+        self.root.quit()
+        self.root.destroy()
 
 
 if __name__ == "__main__":
