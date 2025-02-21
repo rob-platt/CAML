@@ -31,18 +31,28 @@ CONFIG_PATH = "CAMEL_config.json"
 
 class CAMEL:
     def __init__(self, root):
-        """Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
+        """
+        Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
         If image filepath passed, image loading prompt is skipped.
         """
-        self.root = root
+        self.root = root  # root tkinter frame
         self.root.title("CAMEL")
-        self.hover_paused: bool = False
-        self.show_classification: bool = True
+        self.hover_paused: bool = False  # flag if right plot is fixed
+        # flag if classification has been run
         self.classification_flag: bool = False
-        self.x_pos: int = 0
-        self.y_pos: int = 0
-        self.filepath: str = None
-        self.config: dict = {}
+        # flag if class preds should be displayed
+        self.show_classification: bool = False
+        self.x_pos: int = 0  # x position of hovered pixel in left plot
+        self.y_pos: int = 0  # y position of hovered pixel in left plot
+        self.pred_cls: np.ndarray = None  # predicted class labels
+        self.pred_conf: np.ndarray = None  # predicted class confidences
+        self.pred_coords: dict = {}  # predicted class coordinates
+        self.scatter = None  # scatter plot of classification results
+        self.min_wavelength_idx: int = 0  # min wavelength index for spectrum
+        self.max_wavelength_idx: int = 438  # max wavelength index for spectrum
+        self.filepath: str = None  # path to the CRISM image file
+        self.config: dict = {}  # configuration dictionary
+        self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -79,8 +89,10 @@ class CAMEL:
             json.dump(self.config, f)
 
     def prompt_crism_ml_file_selection(self):
-        """Open a separate window to prompt CRISM_ML dataset
-        directory selection on launch."""
+        """
+        Open a separate window to prompt CRISM_ML dataset directory
+        selection on launch.
+        """
         self.crism_ml_dataset_window = tk.Toplevel(self.root)
         self.crism_ml_dataset_window.title("Select CRISM_ML Dataset File")
         self.crism_ml_dataset_window.geometry("300x100")
@@ -99,8 +111,10 @@ class CAMEL:
         crism_ml_dataset_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def prompt_image_file_selection(self):
-        """Open a separate window to prompt image file selection
-        after CRISM_ML dataset selection."""
+        """
+        Open a separate window to prompt image file selection
+        after CRISM_ML dataset selection.
+        """
         self.file_window = tk.Toplevel(self.root)
         self.file_window.title("Select an Image File")
         self.file_window.geometry("300x100")
@@ -119,8 +133,11 @@ class CAMEL:
         file_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def check_bland_mat_file(self):
-        """Check to see if the selected directory exists and
-        has the training data in it."""
+        """
+        Check to see if the selected directory exists and has the training
+        data in it. The name must exactly match for the CRISM_ML library to use
+        it.
+        """
         if not os.path.exists(self.crism_ml_dataset):
             return False
         if not os.path.exists(
@@ -132,7 +149,7 @@ class CAMEL:
     def crism_ml_dataset_selection(self):
         """Open file dialog to select the CRISM_ML dataset."""
         self.crism_ml_dataset = filedialog.askopenfilename(
-            title="Select CRISM_ML Dataset",
+            title="Select CRISM_ML Dataset File",
             filetypes=[("MAT files", "*.mat"), ("All files", "*.*")],
         )
         if self.crism_ml_dataset:
@@ -154,6 +171,12 @@ class CAMEL:
         self.file_window.update_idletasks()
 
     def setup_left_plot(self):
+        """
+        Set up the image plot for the GUI. Takes the left hand side of the
+        plot_frame, row 0 column 0. Within left_frame, plot image canvas and
+        matplotlib navigation toolbar. Hover and on-click controls determine
+        spectrum plot.
+        """
         left_frame = tk.Frame(self.plot_frame)
         left_frame.grid(column=0, row=0, sticky="nsew")
         left_frame.columnconfigure(0, weight=1)
@@ -181,6 +204,11 @@ class CAMEL:
         self.canvas_left.mpl_connect("button_press_event", self.toggle_hover)
 
     def setup_right_plot(self):
+        """
+        Set up the spectrum plot for the GUI. Takes the right hand side of
+        the plot_frame, row 0 column 1. Within right_frame, plot spectrum
+        canvas.
+        """
         right_frame = tk.Frame(self.plot_frame, bg="white")
         right_frame.grid(column=1, row=0, sticky="nsew")
         right_frame.columnconfigure(0, weight=1)
@@ -206,6 +234,7 @@ class CAMEL:
         - Dropdown menu for what image to display
         - Optional dropdown menu for channel selection
         - Classification button
+        - Spectrum range slider
         """
 
         def on_popdown_show(combo: ttk.Combobox):
@@ -230,12 +259,6 @@ class CAMEL:
 
         self.control_frame = tk.Frame(self.root)
         self.control_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
-
-        # # File selection button
-        # file_button = tk.Button(
-        #     self.control_frame, text="Choose File", command=self.load_image
-        # )
-        # file_button.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Dropdown menu for image selection
         summary_params.insert(0, "Image Band")
@@ -318,12 +341,16 @@ class CAMEL:
         self.control_frame.columnconfigure(13, weight=1)
 
     def update_left_plot(self, event):
-        """Update the left plot based on the selected image band or summary
-        parameter."""
+        """
+        Update the left plot based on the selected image band or summary
+        parameter.
+        Special event options:
+        - "Initialization": Set the default channel to 1.394890μm
+        - "Plot Classification": Plot the classification results on the image
+        """
         # If want to update base image and then overlay classification
-        # rather than updating classification, do this to prevent
-        # double plotting or endless looping.
-        if self.classification_flag and event != "Plot Classification":
+        # do this to ensure classification plotted on top
+        if self.show_classification and event != "Plot Classification":
             self.plot_classification()
             return
         image_selection = self.image_selection_dropdown.get()
@@ -338,7 +365,7 @@ class CAMEL:
             self.ax_left.imshow(
                 self.image_array[:, :, channel_idx], cmap="viridis"
             )
-            self.ax_left.set_title(f"Channel {selected_channel}")
+            self.ax_left.set_title(f"{selected_channel}μm Band")
         elif image_selection in IMPLEMENTED_SUMMARY_PARAMETERS:
             self.ax_left.clear()
             self.ax_left.imshow(
@@ -350,14 +377,25 @@ class CAMEL:
         self.canvas_left.draw()
 
     def toggle_hover(self, event):
+        """
+        If the left plot is left clicked, freeze the right (spectrum) plot on
+        that pixel. Unfreeze when left click again.
+        """
         if event.inaxes == self.ax_left and event.button == 1:  # Left click
             self.hover_paused = not self.hover_paused
             status = "Paused" if self.hover_paused else "Active"
-            self.ax_right.set_title(f"Channel View ({status})")
+            right_plot_title = self.ax_right.get_title()
+            self.ax_right.set_title(f"{status}\n{right_plot_title}")
             self.x_pos, self.y_pos = int(event.xdata), int(event.ydata)
             self.canvas_right.draw()
 
     def update_right_plot(self, event):
+        """
+        Plot the spectrum of the pixel currently hovered over in the left plot.
+        Disabled if hover is paused. If classification has been run, plot the
+        line in the colour of the predicted class, and display the class name
+        and confidence in the title.
+        """
         if not self.hover_paused:
             if event.inaxes == self.ax_left:
                 x_pos, y_pos = int(event.xdata), int(event.ydata)
@@ -442,7 +480,15 @@ class CAMEL:
         self.loading_window.update_idletasks()
 
     def add_classification_controls(self):
-        """Add controls for classification results to control panel."""
+        """
+        Add controls for classification results to control panel.
+        Instantiates the following widgets:
+        - Button to toggle classification results
+        - Slider for confidence threshold
+        - Slider for connected components threshold
+        - Button to run filtering
+        - Button to save the image
+        """
         # Add button for toggling display of classification results
         self.toggle_classification_button = tk.Button(
             self.control_frame,
@@ -510,8 +556,10 @@ class CAMEL:
         )
 
     def classification_filter(self):
-        """Filter classification results based on confidence threshold,
-        and connected components."""
+        """
+        Filter classification results based on confidence threshold,
+        and connected components. Then replot the predictions.
+        """
         conf_threshold = self.confidence_slider.get()
         min_components = self.connect_comp_slider.get()
 
@@ -532,6 +580,13 @@ class CAMEL:
         self.plot_classification()
 
     def plot_classification(self):
+        """
+        Plot classification predictions as a scatter plot on top of the left
+        plot. If a custom colour is defined for the mineral, use it. Otherwise,
+        use the default colours. Clears left_plot and replots the current base
+        image to ensure predictions aren't plotted on top of each other. Calls
+        plot_classification_legend to add a legend to the plot frame.
+        """
         self.ax_left.clear()
         self.update_left_plot("Plot Classification")
         for mineral, coords in self.pred_coords.items():
@@ -593,6 +648,7 @@ class CAMEL:
 
     def toggle_classification(self):
         """Plot classification results on top of the left plot."""
+        self.show_classification = not self.show_classification
         if self.show_classification:
             self.toggle_classification_button.config(
                 text="Classification Results (Off)"
@@ -605,7 +661,6 @@ class CAMEL:
                 text="Classification Results (On)"
             )
         self.canvas_left.draw()
-        self.show_classification = not self.show_classification
 
     def preprocess_image(self, image) -> np.ndarray:
         """Preprocess the image for the model. Applies the following steps:
@@ -624,6 +679,17 @@ class CAMEL:
         return image_scaled
 
     def batch_array(self, array):
+        """
+        Split the image array into batches of 1024 pixels.
+        If the image is not divisible by 1024, pad the last batch with zeros.
+
+        Returns
+        -------
+        np.ndarray
+            The image array split into batches
+        int
+            The number of pixels in the last batch that are "real" data
+        """
         # Ensure the input array has the correct number of channels (248)
         if array.shape[1] != 248:
             raise ValueError("Input array must have 248 channels.")
@@ -673,7 +739,13 @@ class CAMEL:
         self.pred_conf = np.max(pred_probs, axis=-1)
 
     def classification_subroutine(self):
-        """Subroutine to classify the image in a separate thread."""
+        """
+        Subroutine to classify the image in a separate thread.
+        Allows the user to continue using the GUI while the classification
+        is running, and a loading window is displayed. After classification is
+        complete, initialize the classification controls, and plot the
+        predictions.
+        """
         self.display_loading_window("Classifying image...")
 
         thread = threading.Thread(target=self.classify, daemon=True)
@@ -682,9 +754,9 @@ class CAMEL:
         def check_thread_state(thread):
             """Check the state of the thread"""
             if not thread.is_alive():
+                self.show_classification = True
                 self.add_classification_controls()
                 self.classification_filter()
-                self.toggle_classification()
                 self.classification_button.config(state="disabled")
                 self.loading_window.destroy()
                 self.classification_flag = True
@@ -713,6 +785,12 @@ class CAMEL:
         self.summary_parameters = summary_parameters
 
     def load_image_subroutine(self, filepath=None):
+        """
+        Subroutine to load the image from the given filepath.
+        If no filepath is given, open a file dialog to select the image.
+        After loading the image, set up the left and right plots, and the
+        control panel.
+        """
         # Open file dialog and get file path
         if not filepath:
             self.filepath = filedialog.askopenfilename(
@@ -756,8 +834,10 @@ class CAMEL:
                 )
 
     def save_file(self):
-        """Save the image and currently displayed classification results to
-        file."""
+        """
+        Save the image and currently displayed classification results to
+        file.
+        """
         save_dir = filedialog.askdirectory(title="Select Save Directory")
 
         if save_dir:
