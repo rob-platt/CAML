@@ -23,7 +23,7 @@ Example: "FRT00009A16_07_IF166L_TRR3_CAT_corr.img" -> "FRT00009A16_07_IF166L_TRR
          "FRT00009A16_07_IF166L_TRR3.lbl" -> "FRT00009A16_07_IF166L_TRR3.lbl"
 ``` 
 
-The loading process may take up to a few minutes.
+The directory containing the `.img` file **must** also contain the `.lbl` file of the image. The loading process may take up to a few minutes.
 
 ## Basic Visualisation Controls
 

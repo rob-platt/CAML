@@ -1,6 +1,6 @@
 # Welcome to CAML
 
-The **C**RISM **A**nalysis using **M**achin**E** **L**earning (CAML) system exists to mineral identification in CRISM imagery using machine learning. This system is designed to be easy to use (no-code), platform agnostic, and to provide a high level of accuracy in mineral identification. It is designed for use by planetary science researchers, students, and enthusiasts.
+The **C**RISM **A**nalysis with **M**achine **L**earning (CAML) software exists to mineral identification in CRISM imagery using machine learning. This system is designed to be easy to use (no-code), platform agnostic, and to provide a high level of accuracy in mineral identification. It is designed for use by planetary science researchers, students, and enthusiasts.
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ The Python package is available on [Github](https://github.com/rob-platt/CRISM_c
     The Python package is currently in development and is not yet available for general use.
 
 !!! note
-    This python package only releases code for running inference of the ML model. A later release will include the model itself, preprocessing, and training code. 
+    This python package only releases code for running inference of the ML model. A separate, later release will include the model itself, preprocessing, and training code. 
 
 ## Citation
 
