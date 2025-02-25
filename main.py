@@ -26,7 +26,7 @@ from classification_plot import (
 from CustomSlider import Slider
 
 MODEL_PATH = "vae_classifier_1024.onnx"
-CONFIG_PATH = "CAMEL_config.json"
+CONFIG_PATH = "CAML_config.json"
 
 # path update if running from PyInstaller
 if os.path.exists("_internal"):

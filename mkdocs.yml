@@ -1,4 +1,4 @@
-site_name: CAMEL
+site_name: CAML
 site_url: https://rob-platt.github.io/CRISM_classifier_application/
 theme:
   name: material

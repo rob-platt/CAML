@@ -6,17 +6,17 @@ Installation should be as simple as downloading the latest [release folder](http
 
 ## Selecting CRISM_ML Data
 
-When you run CAMEL, the first thing you will be prompted for is the directory containing the CRISM_ML training dataset. This must be a folder, containing the `CRISM_bland_unratioed.mat` file for training the bland pixel classifier from [Plebani et al. 2022](https://doi.org/10.1016/j.icarus.2021.114849) ([Github Link](https://github.com/Banus/crism_ml)). This dataset can be found [here](https://zenodo.org/records/13338091).
+When you run CAML, the first thing you will be prompted for is the directory containing the CRISM_ML training dataset. This must be a folder, containing the `CRISM_bland_unratioed.mat` file for training the bland pixel classifier from [Plebani et al. 2022](https://doi.org/10.1016/j.icarus.2021.114849) ([Github Link](https://github.com/Banus/crism_ml)). This dataset can be found [here](https://zenodo.org/records/13338091).
 
 !!! Warning
-    CAMEL cannot load CRISM imagery without this dataset. The dataset must be named `CRISM_bland_unratioed.mat`
+    CAML cannot load CRISM imagery without this dataset. The dataset must be named `CRISM_bland_unratioed.mat`
 
 ## Loading a CRISM Image
 
-CAMEL is designed to work **solely with CRISM L sensor TRDR images with TRR3 processing**. Standard photometric and atmospheric corrections, including the "Volcano-Scan" atmospheric correction, are also expected to have been applied **before** loading the image into CAMEL. There are two methods for acquiring this data:  
+CAML is designed to work **solely with CRISM L sensor TRDR images with TRR3 processing**. Standard photometric and atmospheric corrections, including the "Volcano-Scan" atmospheric correction, are also expected to have been applied **before** loading the image into CAML. There are two methods for acquiring this data:  
 
 - Downloading the data from the [PDS Geosciences Node](https://pds-geosciences.wustl.edu/missions/mro/crism.htm), and then applying the corrections using the [CRISM Analysis Toolkit](https://pds-geosciences.wustl.edu/missions/mro/crism.htm) (CAT) with ENVI software.
-- Using [MarsSI](https://marssi.univ-lyon1.fr/MarsSI/map/mars/#0/0/0/MOLA) to source CRISM images with the desired corrections already applied. The data products from MarsSI with the `_CAT_corr.img` suffix are the ones to use. NB: The suffix must be removed to load the image into CAMEL.
+- Using [MarsSI](https://marssi.univ-lyon1.fr/MarsSI/map/mars/#0/0/0/MOLA) to source CRISM images with the desired corrections already applied. The data products from MarsSI with the `_CAT_corr.img` suffix are the ones to use. NB: The suffix must be removed to load the image into CAML.
 ```
 Example: "FRT00009A16_07_IF166L_TRR3_CAT_corr.img" -> "FRT00009A16_07_IF166L_TRR3.img"
          "FRT00009A16_07_IF166L_TRR3_CAT_corr.hdr" -> "FRT00009A16_07_IF166L_TRR3.hdr"
@@ -35,14 +35,14 @@ The following controls are available:
 - Image Selection: Choose between visualising a ratioed image band, or a summary product (e.g. LCPINDEX2) created from the ratioed image.
 - Image Channel Selection: If visualising an image band, select which band to display.
 - Spectrum wavelength range: Choose the range of wavelengths to display in the spectrum plot.
-- Classification: Button to run classification across the image using the CAMEL model. This will take a few minutes to complete.
+- Classification: Button to run classification across the image using the CAML model. This will take a few minutes to complete.
 
 !!! tip 
     For identification of most hydrated mineral features, plotting between 1.0 and 2.6 microns is recommended.
 
 ## Classification
 
-After pressing the classification button, the CAMEL model will conduct pixel-wise classification across the image. This should be possible with almost any level of hardware[^1], as the model is relatively small. The classification process may take a few minutes to complete, depending on the size of the image and the hardware being used. 
+After pressing the classification button, the CAML model will conduct pixel-wise classification across the image. This should be possible with almost any level of hardware[^1], as the model is relatively small. The classification process may take a few minutes to complete, depending on the size of the image and the hardware being used. 
 
 ## Advanced Visualisation Controls (Post-Classification)
 

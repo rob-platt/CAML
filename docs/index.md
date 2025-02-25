@@ -1,10 +1,10 @@
-# Welcome to CAMEL
+# Welcome to CAML
 
-The **C**RISM **A**nalysis using **M**achin**E** **L**earning (CAMEL) system exists to mineral identification in CRISM imagery using machine learning. This system is designed to be easy to use (no-code), platform agnostic, and to provide a high level of accuracy in mineral identification. It is designed for use by planetary science researchers, students, and enthusiasts.
+The **C**RISM **A**nalysis using **M**achin**E** **L**earning (CAML) system exists to mineral identification in CRISM imagery using machine learning. This system is designed to be easy to use (no-code), platform agnostic, and to provide a high level of accuracy in mineral identification. It is designed for use by planetary science researchers, students, and enthusiasts.
 
 ## Getting Started
 
-To get started with CAMEL, you will need to install the system on your computer. This is available as a standalone desktop application, or as a Python package. The desktop application is recommended for users who are not familiar with Python, while the Python package is recommended for users who are familiar with Python and want to use CAMEL in their own scripts.
+To get started with CAML, you will need to install the system on your computer. This is available as a standalone desktop application, or as a Python package. The desktop application is recommended for users who are not familiar with Python, while the Python package is recommended for users who are familiar with Python and want to use CAML in their own scripts.
 
 ### Desktop Application
 
