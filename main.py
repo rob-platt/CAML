@@ -28,15 +28,19 @@ from CustomSlider import Slider
 MODEL_PATH = "vae_classifier_1024.onnx"
 CONFIG_PATH = "CAMEL_config.json"
 
+# path update if running from PyInstaller
+if os.path.exists("_internal"):
+    MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
-class CAMEL:
+
+class CAML:
     def __init__(self, root):
         """
-        Initialize the CAMEL (CRISM Analysis using MachinE Learning) GUI.
+        Initialize the CAML (CRISM Analysis with Machine Learning) GUI.
         If image filepath passed, image loading prompt is skipped.
         """
         self.root = root  # root tkinter frame
-        self.root.title("CAMEL")
+        self.root.title("CAML")
         self.hover_paused: bool = False  # flag if right plot is fixed
         # flag if classification has been run
         self.classification_flag: bool = False
@@ -94,11 +98,18 @@ class CAMEL:
         selection on launch.
         """
         self.crism_ml_dataset_window = tk.Toplevel(self.root)
-        self.crism_ml_dataset_window.title("Select CRISM_ML Dataset File")
+        self.crism_ml_dataset_window.title(
+            "Select CRISM_ML Dataset File (CRISM_bland_unratioed.mat)"
+        )
         self.crism_ml_dataset_window.geometry("300x100")
 
+        self.crism_ml_dataset_window.transient(root)
+        self.crism_ml_dataset_window.grab_set()
+
         self.crism_ml_dataset_window.protocol(
-            "WM_DELETE_WINDOW", self.close_window)
+            "WM_DELETE_WINDOW",
+            lambda: self.close_window(self.crism_ml_dataset_window),
+        )
 
         self.crism_ml_dataset_label = tk.Label(
             self.crism_ml_dataset_window,
@@ -122,7 +133,12 @@ class CAMEL:
         self.file_window.title("Select an Image File")
         self.file_window.geometry("300x100")
 
-        self.file_window.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.file_window.transient(root)
+        self.file_window.grab_set()
+
+        self.file_window.protocol(
+            "WM_DELETE_WINDOW", lambda: self.close_window(self.file_window)
+        )
 
         self.file_window_label = tk.Label(
             self.file_window, text="Please select an image file."
@@ -196,9 +212,9 @@ class CAMEL:
         self.canvas_left.get_tk_widget().rowconfigure(0, weight=1)
 
         # Add Zoom & Pan Toolbar
-        toolbar_frame = tk.Frame(left_frame)
+        toolbar_frame = tk.Frame(self.plot_frame)
         toolbar_frame.grid(
-            row=1, column=0, sticky="ew"
+            row=2, column=0, sticky="w"
         )  # Place toolbar below plot
         toolbar = NavigationToolbar2Tk(self.canvas_left, toolbar_frame)
         toolbar.update()
@@ -285,7 +301,7 @@ class CAMEL:
             row=1, column=1, padx=5, sticky="nsew"
         )
         image_selection_label = tk.Label(
-            self.control_frame, text="Image Selection:"
+            self.control_frame, text="Image Layer:"
         )
         image_selection_label.grid(row=0, column=1, padx=5)  # sticky="nsew")
 
@@ -305,7 +321,7 @@ class CAMEL:
         )
         self.channel_dropdown.grid(row=1, column=2, padx=5)  # sticky="nsew")
         channel_label = tk.Label(
-            self.control_frame, text="Image Band Selection:"
+            self.control_frame, text="Spectral Wavelength (μm):"
         )
         channel_label.grid(row=0, column=2, padx=5, sticky="nsew")
 
@@ -401,8 +417,15 @@ class CAMEL:
         line in the colour of the predicted class, and display the class name
         and confidence in the title.
         """
+        # Catch changes to wavelength range slider
+        if isinstance(event, list):
+            event = "PlotRangeUpdate"
+
         if not self.hover_paused:
-            if event.inaxes == self.ax_left:
+            if event == "Initialization":
+                self.x_pos, self.y_pos = 100, 100
+            elif event == "PlotRangeUpdate": pass
+            elif event.inaxes == self.ax_left:
                 x_pos, y_pos = int(event.xdata), int(event.ydata)
                 if (
                     (x_pos > 0)
@@ -431,7 +454,12 @@ class CAMEL:
                     except KeyError:
                         line_col = "black"
 
-        if self.hover_paused or event.inaxes == self.ax_left:
+        if (
+            self.hover_paused
+            or event == "Initialization"
+            or event == "PlotRangeUpdate"
+            or event.inaxes == self.ax_left
+        ):
             self.ax_right.clear()
             self.min_wavelength_idx = int(
                 self.spectrum_range_slider.getValues()[0]
@@ -817,9 +845,7 @@ class CAMEL:
                     self.update_left_plot("Initialization")
 
                     # Reset right plot
-                    self.ax_right.clear()
-                    self.ax_right.set_title("Channel View")
-                    self.canvas_right.draw()
+                    self.update_right_plot("Initialization")
 
                     self.file_window.destroy()
                     self.loading_window.destroy()
@@ -871,15 +897,16 @@ class CAMEL:
                 reverse_bands=True,
             )
 
-    def close_window(self):
+    def close_window(self, window):
         """Close the window and exit the program."""
+        window.destroy()
         self.root.quit()
         self.root.destroy()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = CAMEL(
+    app = CAML(
         root,
     )
     root.mainloop()
