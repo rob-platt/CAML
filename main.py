@@ -24,6 +24,7 @@ from classification_plot import (
     mineral_colours,
 )
 from CustomSlider import Slider
+from Predict import Classifier
 
 MODEL_PATH = "vae_classifier_1024.onnx"
 CONFIG_PATH = "CAML_config.json"
@@ -32,7 +33,7 @@ CONFIG_PATH = "CAML_config.json"
 if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
-
+ALPHA = 0.1
 class CAML:
     def __init__(self, root):
         """
@@ -55,6 +56,7 @@ class CAML:
         self.min_wavelength_idx: int = 0  # min wavelength index for spectrum
         self.max_wavelength_idx: int = 438  # max wavelength index for spectrum
         self.filepath: str = None  # path to the CRISM image file
+        self.alpha = ALPHA
         self.config: dict = {}  # configuration dictionary
         self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
 
@@ -340,7 +342,7 @@ class CAML:
         spectrum_slider_label = tk.Label(
             self.control_frame, text="Spectrum Wavelength Range:"
         )
-        spectrum_slider_label.grid(row=0, column=14, padx=5, sticky="nsew")
+        spectrum_slider_label.grid(row=1, column=14, padx=5, sticky="nsew")
 
         # Slider to control x-axis range of spectrum plot
         self.spectrum_range_slider = Slider(
@@ -357,9 +359,34 @@ class CAML:
             self.update_right_plot
         )
         self.spectrum_range_slider.grid(
-            row=1, column=14, columnspan=2, padx=5, sticky="e"
+            row=2, column=14, columnspan=2, padx=5, sticky="e"
         )
+
+        opacity_slider_label = tk.Label(
+            self.control_frame, text="Opacity"
+        )
+        opacity_slider_label.grid(row=3, column=14, padx=5, sticky="nsew")
+
+        # Slider to control x-axis range of opacity plot
+        self.opacity_range_slider = ttk.Scale(
+            self.control_frame,
+            from_=0,
+            to=1,
+            orient='horizontal',  # horizontal
+        )
+
+        self.opacity_range_slider.grid(
+            row=4, column=8, columnspan=7, padx=0, sticky="e")
+
+
+
+
+
         self.control_frame.columnconfigure(13, weight=1)
+
+    def set_alpha(self):
+        self.alpha = self.opacity_range_slider.get()
+
 
     def update_left_plot(self, event):
         """
@@ -622,6 +649,7 @@ class CAML:
         """
         self.ax_left.clear()
         self.update_left_plot("Plot Classification")
+        self.set_alpha()
         for mineral, coords in self.pred_coords.items():
             if mineral == 1:
                 continue
@@ -635,6 +663,7 @@ class CAML:
                         marker="s",
                         label=CLASS_NAMES[mineral],
                         color=mineral_colours[CLASS_NAMES[mineral]],
+                        alpha=self.alpha,
                     )
                 # Otherwise, use the default colours
                 except KeyError:
@@ -644,6 +673,7 @@ class CAML:
                         s=0.75,
                         label=CLASS_NAMES[mineral],
                         marker="s",
+                        alpha=self.alpha,
                     )
         self.canvas_left.draw()
         self.plot_classification_legend()
@@ -695,81 +725,10 @@ class CAML:
             )
         self.canvas_left.draw()
 
-    def preprocess_image(self, image) -> np.ndarray:
-        """Preprocess the image for the model. Applies the following steps:
-        - Clip image channels to 248 bands
-        - Impute bad values (Ratioed I/F > 10) in the image
-        - Scale the image between 0 and 1
-        """
-        image = image.reshape(-1, 438)  # 438 bands
-        image, _ = clip_bands(image)
-        image = image[:, :248]  # 248 bands to use for the model
-        image, _ = impute_bad_values_in_image(image, threshold=10)
-        min_vals = np.min(image, axis=-1, keepdims=True)
-        max_vals = np.max(image, axis=-1, keepdims=True)
-
-        image_scaled = (image - min_vals) / ((max_vals - min_vals) + 0.00001)
-        return image_scaled
-
-    def batch_array(self, array):
-        """
-        Split the image array into batches of 1024 pixels.
-        If the image is not divisible by 1024, pad the last batch with zeros.
-
-        Returns
-        -------
-        np.ndarray
-            The image array split into batches
-        int
-            The number of pixels in the last batch that are "real" data
-        """
-        # Ensure the input array has the correct number of channels (248)
-        if array.shape[1] != 248:
-            raise ValueError("Input array must have 248 channels.")
-
-        # Calculate the number of full blocks and the remainder
-        num_full_blocks = array.shape[0] // 1024
-        remainder = array.shape[0] % 1024
-
-        # Split into full blocks
-        blocks = [
-            array[i * 1024 : (i + 1) * 1024] for i in range(num_full_blocks)
-        ]
-
-        # Handle the remainder by padding with zeros if necessary
-        if remainder > 0:
-            padded_block = np.zeros((1024, 248))
-            padded_block[:remainder] = array[num_full_blocks * 1024 :]
-            blocks.append(padded_block)
-
-        return np.array(blocks, dtype="float32"), remainder
-
     def classify(self):
         """Classify the CRISM cube using the CRISM Classifier model."""
+        self.pred_cls, self.pred_conf  = Classifier(self.visualizer).predict()
 
-        ort_session = onnxruntime.InferenceSession(
-            (MODEL_PATH),
-            providers=["CPUExecutionProvider"],
-        )
-
-        image = np.empty_like(self.visualizer.image.ratioed_image)
-        image[:] = self.visualizer.image.ratioed_image
-        image = self.preprocess_image(image)
-        batches, remainder = self.batch_array(image)
-
-        pred_probs = []
-        for x in batches:
-            onnx_input = x[:, np.newaxis, :]
-            onnxruntime_input = {"input.1": onnx_input}
-            pred_probs.append(ort_session.run(None, onnxruntime_input)[1])
-
-        pred_probs = np.array(pred_probs).reshape(-1, 38)
-        # Remove the padding from the last batch if necessary
-        if remainder > 0:
-            pred_probs = pred_probs[: -(1024 - remainder)]
-        pred_probs = pred_probs.reshape(*self.image_array.shape[:2], 38)
-        self.pred_cls = np.argmax(pred_probs, axis=-1)
-        self.pred_conf = np.max(pred_probs, axis=-1)
 
     def classification_subroutine(self):
         """
