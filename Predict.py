@@ -1,7 +1,5 @@
 import numpy as np
 import onnxruntime
-from n2n4m.plot import Visualiser
-from n2n4m.crism_image import CRISMImage
 from n2n4m.n2n4m_denoise import clip_bands
 from n2n4m.preprocessing import impute_bad_values_in_image
 
@@ -93,21 +91,3 @@ class Classifier:
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
         return self.pred_cls, self.pred_conf
-
-
-if __name__ == "__main__":
-    PATH = (
-        "/home/ziad/Documents/CAMEL_Application/frt0001eb09_07_if164l_trr3.img"
-    )
-    img = CRISMImage(PATH)
-    PATH_TO_MAT = "/home/ziad/Documents/CAMEL_Application/"
-
-    img.ratio_image(PATH_TO_MAT)
-    visualizer = Visualiser(img)
-    clf = Classifier(visualizer)
-    pred_cls, pred_conf = clf.predict()
-
-    import matplotlib.pyplot as plt
-
-    plt.imshow(pred_conf)
-    plt.show()
