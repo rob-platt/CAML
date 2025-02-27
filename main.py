@@ -30,8 +30,6 @@ CONFIG_PATH = "CAML_config.json"
 if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
-ALPHA = 0.1
-
 
 class CAML:
     def __init__(self, root):
@@ -55,7 +53,6 @@ class CAML:
         self.min_wavelength_idx: int = 0  # min wavelength index for spectrum
         self.max_wavelength_idx: int = 438  # max wavelength index for spectrum
         self.filepath: str = None  # path to the CRISM image file
-        self.alpha = ALPHA
         self.config: dict = {}  # configuration dictionary
         self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
 
@@ -591,25 +588,6 @@ class CAML:
             row=0, column=12, rowspan=2, padx=5, sticky="nsw"
         )
 
-        # Slider to control opacity of classification results
-        opacity_slider_label = tk.Label(
-            self.control_frame, text="Class Prediction Opacity"
-        )
-        opacity_slider_label.grid(row=0, column=14, padx=5, sticky="nsew")
-
-        self.opacity_range_slider = ttk.Scale(
-            self.control_frame,
-            from_=0,
-            to=1,
-            value=1,
-            orient="horizontal",
-            command=lambda x: self.plot_classification(),
-        )
-        self.opacity_range_slider.grid(row=1, column=14, sticky="we")
-
-    def set_alpha(self):
-        self.alpha = self.opacity_range_slider.get()
-
     def classification_filter(self):
         """
         Filter classification results based on confidence threshold,
@@ -644,7 +622,6 @@ class CAML:
         """
         self.ax_left.clear()
         self.update_left_plot("Plot Classification")
-        self.set_alpha()
         for mineral, coords in self.pred_coords.items():
             if mineral == 1:
                 continue
@@ -658,7 +635,6 @@ class CAML:
                         marker="s",
                         label=CLASS_NAMES[mineral],
                         color=mineral_colours[CLASS_NAMES[mineral]],
-                        alpha=self.alpha,
                     )
                 # Otherwise, use the default colours
                 except KeyError:
@@ -668,7 +644,6 @@ class CAML:
                         s=0.75,
                         label=CLASS_NAMES[mineral],
                         marker="s",
-                        alpha=self.alpha,
                     )
         self.canvas_left.draw()
         self.plot_classification_legend()
