@@ -9,6 +9,7 @@ import numpy as np
 import threading
 import json
 import os
+import warnings
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
@@ -55,6 +56,7 @@ class CAML:
         self.filepath: str = None  # path to the CRISM image file
         self.config: dict = {}  # configuration dictionary
         self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
+        self.false_colour_composite: np.ndarray = None  # false colour comp
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
@@ -281,6 +283,7 @@ class CAML:
 
         # Dropdown menu for image selection
         summary_params.insert(0, "Image Band")
+        summary_params.insert(0, "False Colour Composite")
         self.image_selection_dropdown = ttk.Combobox(
             self.control_frame,
             values=summary_params,
@@ -294,7 +297,7 @@ class CAML:
         self.image_selection_dropdown.bind(
             "<<ComboboxSelected>>", self.update_left_plot
         )
-        self.image_selection_dropdown.set("Image Band")
+        self.image_selection_dropdown.set("False Colour Composite")
         self.image_selection_dropdown.grid(
             row=1, column=1, padx=5, sticky="nsew"
         )
@@ -375,11 +378,8 @@ class CAML:
             return
         image_selection = self.image_selection_dropdown.get()
         if image_selection == "Image Band":
-            if event == "Initialization":
-                selected_channel = 1.394890
-            else:
-                self.channel_dropdown.state(["!disabled"])
-                selected_channel = self.channel_dropdown.get()
+            self.channel_dropdown.state(["!disabled"])
+            selected_channel = self.channel_dropdown.get()
             channel_idx = ALL_WAVELENGTHS.index(float(selected_channel))
             self.ax_left.clear()
             self.ax_left.imshow(
@@ -394,7 +394,56 @@ class CAML:
             )
             self.ax_left.set_title(f"{image_selection} Summary Parameter")
             self.channel_dropdown.state(["disabled"])
+        elif image_selection == "False Colour Composite":
+            self.ax_left.clear()
+            self.ax_left.imshow(self.false_colour_composite)
+            self.ax_left.set_title("False Colour Composite")
+            self.channel_dropdown.state(["disabled"])
         self.canvas_left.draw()
+
+    def create_false_colour_composite(self):
+        """
+        Create a false colour composite image from the CRISM image.
+        """
+        r_channel_idx = ALL_WAVELENGTHS.index(2.529510)
+        g_channel_idx = ALL_WAVELENGTHS.index(1.506610)
+        b_channel_idx = ALL_WAVELENGTHS.index(1.079960)
+
+        r_channel = self.image_array[:, :, r_channel_idx]
+        g_channel = self.image_array[:, :, g_channel_idx]
+        b_channel = self.image_array[:, :, b_channel_idx]
+
+        # 99th percentile clip
+        r_channel[r_channel > np.nanpercentile(r_channel, 99)] = (
+            np.nanpercentile(r_channel, 99)
+        )
+        g_channel[g_channel > np.nanpercentile(g_channel, 99)] = (
+            np.nanpercentile(g_channel, 99)
+        )
+        b_channel[b_channel > np.nanpercentile(b_channel, 99)] = (
+            np.nanpercentile(b_channel, 99)
+        )
+
+        # scale the channels between 0 and 255
+        r_channel = (r_channel - np.nanmin(r_channel)) / (
+            np.nanmax(r_channel) - np.nanmin(r_channel)
+        )
+        g_channel = (g_channel - np.nanmin(g_channel)) / (
+            np.nanmax(g_channel) - np.nanmin(g_channel)
+        )
+        b_channel = (b_channel - np.nanmin(b_channel)) / (
+            np.nanmax(b_channel) - np.nanmin(b_channel)
+        )
+
+        # ignore casting runtime warnings
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        r_channel = (r_channel * 255).astype(np.uint8)
+        g_channel = (g_channel * 255).astype(np.uint8)
+        b_channel = (b_channel * 255).astype(np.uint8)
+        warnings.resetwarnings()
+        self.false_colour_composite = np.stack(
+            [r_channel, g_channel, b_channel], axis=-1
+        )
 
     def toggle_hover(self, event):
         """
@@ -745,6 +794,7 @@ class CAML:
         self.image_array = self.visualizer.raw_image_copy
         self.ratioed_array = self.visualizer.ratioed_image_copy
         self.summary_parameters = summary_parameters
+        self.create_false_colour_composite()
 
     def load_image_subroutine(self, filepath=None):
         """
