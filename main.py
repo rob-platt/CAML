@@ -6,7 +6,6 @@ from matplotlib.backends.backend_tkagg import (
 )
 from matplotlib.figure import Figure
 import numpy as np
-import onnxruntime
 import threading
 import json
 import os
@@ -14,8 +13,6 @@ import os
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
 from n2n4m.summary_parameters import IMPLEMENTED_SUMMARY_PARAMETERS
-from n2n4m.n2n4m_denoise import clip_bands
-from n2n4m.preprocessing import impute_bad_values_in_image
 from n2n4m.wavelengths import ALL_WAVELENGTHS
 
 from classification_plot import (
@@ -34,6 +31,8 @@ if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
 ALPHA = 0.1
+
+
 class CAML:
     def __init__(self, root):
         """
@@ -342,7 +341,7 @@ class CAML:
         spectrum_slider_label = tk.Label(
             self.control_frame, text="Spectrum Wavelength Range:"
         )
-        spectrum_slider_label.grid(row=1, column=14, padx=5, sticky="nsew")
+        spectrum_slider_label.grid(row=0, column=16, padx=5, sticky="nsew")
 
         # Slider to control x-axis range of spectrum plot
         self.spectrum_range_slider = Slider(
@@ -359,34 +358,10 @@ class CAML:
             self.update_right_plot
         )
         self.spectrum_range_slider.grid(
-            row=2, column=14, columnspan=2, padx=5, sticky="e"
+            row=1, column=16, columnspan=2, padx=5, sticky="e"
         )
-
-        opacity_slider_label = tk.Label(
-            self.control_frame, text="Opacity"
-        )
-        opacity_slider_label.grid(row=3, column=14, padx=5, sticky="nsew")
-
-        # Slider to control x-axis range of opacity plot
-        self.opacity_range_slider = ttk.Scale(
-            self.control_frame,
-            from_=0,
-            to=1,
-            orient='horizontal',  # horizontal
-        )
-
-        self.opacity_range_slider.grid(
-            row=4, column=8, columnspan=7, padx=0, sticky="e")
-
-
-
-
-
-        self.control_frame.columnconfigure(13, weight=1)
-
-    def set_alpha(self):
-        self.alpha = self.opacity_range_slider.get()
-
+        # Add weight to empty column to ensure spectral slider always on right
+        self.control_frame.columnconfigure(15, weight=1)
 
     def update_left_plot(self, event):
         """
@@ -451,7 +426,8 @@ class CAML:
         if not self.hover_paused:
             if event == "Initialization":
                 self.x_pos, self.y_pos = 100, 100
-            elif event == "PlotRangeUpdate": pass
+            elif event == "PlotRangeUpdate":
+                pass
             elif event.inaxes == self.ax_left:
                 x_pos, y_pos = int(event.xdata), int(event.ydata)
                 if (
@@ -615,6 +591,25 @@ class CAML:
             row=0, column=12, rowspan=2, padx=5, sticky="nsw"
         )
 
+        # Slider to control opacity of classification results
+        opacity_slider_label = tk.Label(
+            self.control_frame, text="Class Prediction Opacity"
+        )
+        opacity_slider_label.grid(row=0, column=14, padx=5, sticky="nsew")
+
+        self.opacity_range_slider = ttk.Scale(
+            self.control_frame,
+            from_=0,
+            to=1,
+            value=1,
+            orient="horizontal",
+            command=lambda x: self.plot_classification(),
+        )
+        self.opacity_range_slider.grid(row=1, column=14, sticky="we")
+
+    def set_alpha(self):
+        self.alpha = self.opacity_range_slider.get()
+
     def classification_filter(self):
         """
         Filter classification results based on confidence threshold,
@@ -727,8 +722,8 @@ class CAML:
 
     def classify(self):
         """Classify the CRISM cube using the CRISM Classifier model."""
-        self.pred_cls, self.pred_conf  = Classifier(self.visualizer).predict()
-
+        model = Classifier()
+        self.pred_cls, self.pred_conf = model.predict(self.ratioed_array)
 
     def classification_subroutine(self):
         """

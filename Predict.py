@@ -8,13 +8,16 @@ from n2n4m.preprocessing import impute_bad_values_in_image
 MODEL_PATH = "vae_classifier_1024.onnx"
 
 
-class Classifier():        
+class Classifier:
     """Classify the CRISM cube using the CRISM Classifier model."""
-    def __init__(self, visualizer):
-        self.visualizer = visualizer     
+
+    def __init__(self):
+        self.pred_cls: np.ndarray = None
+        self.pred_conf: np.ndarray = None
 
     def preprocess_image(self, image) -> np.ndarray:
-        """Preprocess the image for the model. Applies the following steps:
+        """
+        Preprocess the image for the model. Applies the following steps:
         - Clip image channels to 248 bands
         - Impute bad values (Ratioed I/F > 10) in the image
         - Scale the image between 0 and 1
@@ -28,7 +31,7 @@ class Classifier():
 
         image_scaled = (image - min_vals) / ((max_vals - min_vals) + 0.00001)
         return image_scaled
-    
+
     def batch_array(self, array):
         """
         Split the image array into batches of 1024 pixels.
@@ -61,15 +64,19 @@ class Classifier():
             blocks.append(padded_block)
 
         return np.array(blocks, dtype="float32"), remainder
-    def predict(self):
+
+    def predict(self, image_array: np.ndarray):
+        """
+        Predict mineral classes and confidence scores for the input image.
+        """
         ort_session = onnxruntime.InferenceSession(
             (MODEL_PATH),
             providers=["CPUExecutionProvider"],
         )
 
-        image = np.empty_like(self.visualizer.image.ratioed_image)
+        image = np.empty_like(image_array)
         original_shape = image.shape
-        image[:] = self.visualizer.image.ratioed_image
+        image[:] = image_array
         image = self.preprocess_image(image)
         batches, remainder = self.batch_array(image)
         pred_probs = []
@@ -86,10 +93,12 @@ class Classifier():
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
         return self.pred_cls, self.pred_conf
-    
+
 
 if __name__ == "__main__":
-    PATH = "/home/ziad/Documents/CAMEL_Application/frt0001eb09_07_if164l_trr3.img"
+    PATH = (
+        "/home/ziad/Documents/CAMEL_Application/frt0001eb09_07_if164l_trr3.img"
+    )
     img = CRISMImage(PATH)
     PATH_TO_MAT = "/home/ziad/Documents/CAMEL_Application/"
 
@@ -99,5 +108,6 @@ if __name__ == "__main__":
     pred_cls, pred_conf = clf.predict()
 
     import matplotlib.pyplot as plt
+
     plt.imshow(pred_conf)
     plt.show()
