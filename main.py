@@ -45,6 +45,16 @@ class CAML:
         self.classification_flag: bool = False
         # flag if class preds should be displayed
         self.show_classification: bool = False
+        # flag if spectra reconstruction should be displayed
+        self.show_reconstruction: bool = False
+        # image array for the CRISM image
+        self.image_array: np.ndarray = None
+        # ratioed array for the CRISM image
+        self.ratioed_array: np.ndarray = None
+        # visualizer object for the CRISM image
+        self.visualizer: Visualiser = None
+        # reconstructed image array
+        self.reconstructed_image: np.ndarray = None
         self.x_pos: int = 0  # x position of hovered pixel in left plot
         self.y_pos: int = 0  # y position of hovered pixel in left plot
         self.pred_cls: np.ndarray = None  # predicted class labels
@@ -341,7 +351,7 @@ class CAML:
         spectrum_slider_label = tk.Label(
             self.control_frame, text="Spectrum Wavelength Range:"
         )
-        spectrum_slider_label.grid(row=0, column=16, padx=5, sticky="nsew")
+        spectrum_slider_label.grid(row=0, column=17, padx=5, sticky="nsew")
 
         # Slider to control x-axis range of spectrum plot
         self.spectrum_range_slider = Slider(
@@ -358,7 +368,7 @@ class CAML:
             self.update_right_plot
         )
         self.spectrum_range_slider.grid(
-            row=1, column=16, columnspan=2, padx=5, sticky="e"
+            row=1, column=17, columnspan=2, padx=5, sticky="e"
         )
         # Add weight to empty column to ensure spectral slider always on right
         self.control_frame.columnconfigure(15, weight=1)
@@ -373,7 +383,7 @@ class CAML:
         """
         # If want to update base image and then overlay classification
         # do this to ensure classification plotted on top
-        if self.show_classification and event != "Plot Classification":
+        if self.show_classification and event != "PlotClassification":
             self.plot_classification()
             return
         image_selection = self.image_selection_dropdown.get()
@@ -472,7 +482,11 @@ class CAML:
         if not self.hover_paused:
             if event == "Initialization":
                 self.x_pos, self.y_pos = 100, 100
-            elif event == "PlotRangeUpdate":
+            elif (
+                event == "PlotRangeUpdate"
+                or event == "ReconstructionOn"
+                or event == "ReconstructionOff"
+            ):
                 pass
             elif event.inaxes == self.ax_left:
                 x_pos, y_pos = int(event.xdata), int(event.ydata)
@@ -507,6 +521,8 @@ class CAML:
             self.hover_paused
             or event == "Initialization"
             or event == "PlotRangeUpdate"
+            or event == "ReconstructionOn"
+            or event == "ReconstructionOff"
             or event.inaxes == self.ax_left
         ):
             self.ax_right.clear()
@@ -526,7 +542,29 @@ class CAML:
                     self.min_wavelength_idx : self.max_wavelength_idx,
                 ],
                 color=line_col,
+                label="Spectrum",
             )
+
+            # Plot the reconstructed spectrum if the flag is set
+            if self.show_reconstruction:
+                # only 248 bands available in reconstruction
+                max_wavelength_idx = min(self.max_wavelength_idx, 248)
+                self.ax_right.plot(
+                    ALL_WAVELENGTHS[
+                        self.min_wavelength_idx + 2 : max_wavelength_idx + 2
+                    ],
+                    self.reconstructed_image[
+                        self.y_pos,
+                        self.x_pos,
+                        self.min_wavelength_idx : max_wavelength_idx,
+                    ]
+                    - 0.02,  # offset to separate the two lines
+                    color=line_col,
+                    alpha=0.5,
+                    label="Reconstructed Spectrum",
+                )
+                self.ax_right.legend(loc="lower center")
+
             self.ax_right.set_xlabel("Wavelength (μm)")
             self.ax_right.set_ylabel("Ratioed I/F")
             if self.classification_flag:
@@ -637,6 +675,17 @@ class CAML:
             row=0, column=12, rowspan=2, padx=5, sticky="nsw"
         )
 
+        # Add toggle for displaying spectra reconstruction
+        self.toggle_spectra_button = tk.Button(
+            self.control_frame,
+            text="Spectra Reconstruction (Off)",
+            command=self.toggle_spectra_reconstruction,
+            wraplength=100,
+        )
+        self.toggle_spectra_button.grid(
+            row=0, column=16, rowspan=2, padx=5, sticky="ens"
+        )
+
     def classification_filter(self):
         """
         Filter classification results based on confidence threshold,
@@ -670,7 +719,7 @@ class CAML:
         plot_classification_legend to add a legend to the plot frame.
         """
         self.ax_left.clear()
-        self.update_left_plot("Plot Classification")
+        self.update_left_plot("PlotClassification")
         for mineral, coords in self.pred_coords.items():
             if mineral == 1:
                 continue
@@ -738,16 +787,34 @@ class CAML:
             self.plot_classification()
         else:
             self.ax_left.clear()
-            self.update_left_plot("Classification Off")
+            self.update_left_plot("ClassificationOff")
             self.toggle_classification_button.config(
                 text="Classification Results (On)"
             )
         self.canvas_left.draw()
 
+    def toggle_spectra_reconstruction(self):
+        """Toggle the display of the spectra reconstruction."""
+        self.show_reconstruction = not self.show_reconstruction
+        if self.show_reconstruction:
+            self.toggle_spectra_button.config(
+                text="Spectra Reconstruction (Off)"
+            )
+            self.update_right_plot("ReconstructionOn")
+        else:
+            self.ax_right.clear()
+            self.update_right_plot("ReconstructionOff")
+            self.toggle_spectra_button.config(
+                text="Spectra Reconstruction (On)"
+            )
+        self.canvas_right.draw()
+
     def classify(self):
         """Classify the CRISM cube using the CRISM Classifier model."""
         model = Classifier()
-        self.pred_cls, self.pred_conf = model.predict(self.ratioed_array)
+        self.reconstructed_image, self.pred_cls, self.pred_conf = (
+            model.predict(self.ratioed_array)
+        )
 
     def classification_subroutine(self):
         """
@@ -766,6 +833,7 @@ class CAML:
             """Check the state of the thread"""
             if not thread.is_alive():
                 self.show_classification = True
+                self.show_reconstruction = True
                 self.add_classification_controls()
                 self.classification_filter()
                 self.classification_button.config(state="disabled")

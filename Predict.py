@@ -10,10 +10,13 @@ class Classifier:
     """Classify the CRISM cube using the CRISM Classifier model."""
 
     def __init__(self):
+        self.min_vals: np.ndarray = None
+        self.max_vals: np.ndarray = None
         self.pred_cls: np.ndarray = None
         self.pred_conf: np.ndarray = None
         self.bad_pixels: np.ndarray[np.bool_] = None
         self.spatial_dims: tuple[int, int] = None
+        self.recon: np.ndarray = None
 
     def preprocess_image(self, image) -> np.ndarray:
         """
@@ -25,16 +28,22 @@ class Classifier:
         image = image.reshape(-1, 438)  # 438 bands
         image, _ = clip_bands(image)
         image = image[:, :248]  # 248 bands to use for the model
-        image, bad_pix = impute_bad_values_in_image(
-            image, threshold=10
-        )
+        image, bad_pix = impute_bad_values_in_image(image, threshold=10)
         bad_pix = bad_pix.reshape(*self.spatial_dims, 248)
         self.bad_pixels = np.all(bad_pix, axis=-1)
-        min_vals = np.min(image, axis=-1, keepdims=True)
-        max_vals = np.max(image, axis=-1, keepdims=True)
+        self.min_vals = np.min(image, axis=-1, keepdims=True)
+        self.max_vals = np.max(image, axis=-1, keepdims=True)
 
-        image_scaled = (image - min_vals) / ((max_vals - min_vals) + 0.00001)
+        image_scaled = (image - self.min_vals) / (
+            (self.max_vals - self.min_vals) + 0.00001
+        )
         return image_scaled
+
+    def inverse_normalise(self, image):
+        """
+        Inverse normalise the image to the original scale.
+        """
+        return image * (self.max_vals - self.min_vals) + self.min_vals
 
     def batch_array(self, array):
         """
@@ -72,6 +81,7 @@ class Classifier:
     def predict(self, image_array: np.ndarray):
         """
         Predict mineral classes and confidence scores for the input image.
+        Also reconstruct the input image using the VAE model.
         """
         ort_session = onnxruntime.InferenceSession(
             (MODEL_PATH),
@@ -84,15 +94,27 @@ class Classifier:
         image = self.preprocess_image(image)
         batches, remainder = self.batch_array(image)
         pred_probs = []
+        reconstructions = []
         for x in batches:
             onnx_input = x[:, np.newaxis, :]
             onnxruntime_input = {"input.1": onnx_input}
-            pred_probs.append(ort_session.run(None, onnxruntime_input)[1])
+            reconstructions_batch, pred_probs_batch = ort_session.run(
+                None, onnxruntime_input
+            )
+            reconstructions.append(reconstructions_batch)
+            pred_probs.append(pred_probs_batch)
 
+        reconstructions = np.array(reconstructions).reshape(-1, 248)
         pred_probs = np.array(pred_probs).reshape(-1, 38)
         # Remove the padding from the last batch if necessary
         if remainder > 0:
             pred_probs = pred_probs[: -(1024 - remainder)]
+            reconstructions = reconstructions[: -(1024 - remainder)]
+
+        reconstructions = self.inverse_normalise(reconstructions)
+        reconstructions = reconstructions.reshape(*self.spatial_dims, 248)
+        self.recon = reconstructions
+
         pred_probs = pred_probs.reshape(self.spatial_dims[:2] + (38,))
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
@@ -100,4 +122,4 @@ class Classifier:
         # Set bad pixels to "artefact" class with -1 confidence
         self.pred_cls[self.bad_pixels] = 37
         self.pred_conf[self.bad_pixels] = -1
-        return self.pred_cls, self.pred_conf
+        return self.recon, self.pred_cls, self.pred_conf
