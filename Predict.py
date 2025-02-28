@@ -12,6 +12,8 @@ class Classifier:
     def __init__(self):
         self.pred_cls: np.ndarray = None
         self.pred_conf: np.ndarray = None
+        self.bad_pixels: np.ndarray[np.bool_] = None
+        self.spatial_dims: tuple[int, int] = None
 
     def preprocess_image(self, image) -> np.ndarray:
         """
@@ -23,7 +25,11 @@ class Classifier:
         image = image.reshape(-1, 438)  # 438 bands
         image, _ = clip_bands(image)
         image = image[:, :248]  # 248 bands to use for the model
-        image, _ = impute_bad_values_in_image(image, threshold=10)
+        image, bad_pix = impute_bad_values_in_image(
+            image, threshold=10
+        )
+        bad_pix = bad_pix.reshape(*self.spatial_dims, 248)
+        self.bad_pixels = np.all(bad_pix, axis=-1)
         min_vals = np.min(image, axis=-1, keepdims=True)
         max_vals = np.max(image, axis=-1, keepdims=True)
 
@@ -73,7 +79,7 @@ class Classifier:
         )
 
         image = np.empty_like(image_array)
-        original_shape = image.shape
+        self.spatial_dims = image.shape[:-1]
         image[:] = image_array
         image = self.preprocess_image(image)
         batches, remainder = self.batch_array(image)
@@ -87,7 +93,11 @@ class Classifier:
         # Remove the padding from the last batch if necessary
         if remainder > 0:
             pred_probs = pred_probs[: -(1024 - remainder)]
-        pred_probs = pred_probs.reshape(original_shape[:2] + (38,))
+        pred_probs = pred_probs.reshape(self.spatial_dims[:2] + (38,))
         self.pred_cls = np.argmax(pred_probs, axis=-1)
         self.pred_conf = np.max(pred_probs, axis=-1)
+
+        # Set bad pixels to "artefact" class with -1 confidence
+        self.pred_cls[self.bad_pixels] = 37
+        self.pred_conf[self.bad_pixels] = -1
         return self.pred_cls, self.pred_conf
