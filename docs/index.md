@@ -14,8 +14,24 @@ The desktop application is available for Windows, macOS, and Linux. To install t
 
 The Python package is available on [Github](https://github.com/rob-platt/CRISM_classifier_application).
 
-!!! warning
-    The Python package is currently in development and is not yet available for general use.
+To create a new conda environment and install the package, run the following commands:
+
+```bash
+conda env create -f environment.yml
+conda activate caml
+```
+
+Or you can install the dependencies into a virtual environment of your choice using the `requirements.txt` file:
+
+```bash
+# Activate your virtual environment
+pip install -r requirements.txt
+```
+To run the application, use the following command:
+
+```bash
+python main.py
+```
 
 !!! note
     This python package only releases code for running inference of the ML model. A separate, later release will include the model itself, preprocessing, and training code. 
@@ -23,6 +39,8 @@ The Python package is available on [Github](https://github.com/rob-platt/CRISM_c
 ## Citation
 
 If you find this software useful, please cite the following paper:
+
+Platt, R., Arcucci, R. & John, C.M., 2024. Automated classification of CRISM spectra using hybrid neural networks. *Tenth International Conference on Mars 2024*, LPI Contributions, 3007, p.3166. Available at: https://ui.adsabs.harvard.edu/abs/2024LPICo3007.3166P.
 
 ```
 @inproceedings{platt_automated_2024,
