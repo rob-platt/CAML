@@ -12,7 +12,7 @@ theme:
     code: Roboto Mono
 
   logo: assets/CAML_logo_text_noback_v1.png
-  favicon: assets/favicon.png
+  favicon: assets/CAML_logo_noback_small_v1.png
 
   features:
     - navigation.instant
