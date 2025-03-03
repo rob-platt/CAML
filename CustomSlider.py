@@ -1,7 +1,6 @@
 # This code is from https://github.com/MenxLi/tkSliderWidget
 
-from tkinter import *
-from tkinter.ttk import *
+from tkinter import Frame, Canvas
 
 from typing import TypedDict, List, Callable, Optional, Union
 
@@ -120,7 +119,6 @@ class Slider(Frame):
 
     def _moveBar(self, event):
         x = event.x
-        y = event.y
         if self.selected_idx is None:
             return False
         pos = self.__calcPos(x)
@@ -133,8 +131,6 @@ class Slider(Frame):
         self.__moveBar(idx, pos)
 
     def _removeBar(self, event):
-        x = event.x
-        y = event.y
         if self.selected_idx is None:
             return False
         idx = self.selected_idx
@@ -145,7 +141,6 @@ class Slider(Frame):
 
     def _addBar(self, event):
         x = event.x
-        y = event.y
 
         if self.selected_idx is None:
             pos = self.__calcPos(x)
@@ -175,7 +170,7 @@ class Slider(Frame):
             fill=Slider.LINE_COLOR,
             width=Slider.LINE_WIDTH,
         )
-        return id
+        return id1
 
     def __addBar(self, pos):
         """@ pos: position of the bar, ranged from (0,1)"""
