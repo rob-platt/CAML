@@ -27,15 +27,17 @@ The directory containing the `.img` file **must** also contain the `.lbl` file o
 
 ## Basic Visualisation Controls
 
-After loading a CRISM image, you will be presented with the image alongside a plot of individual spectra. You can pan and zoom on the image plot using the controls underneath it. Hovering over a pixel 
+After loading a CRISM image, you will be presented with the image alongside a plot of individual spectra. You can pan and zoom on the image plot using the controls underneath it (3). Hovering over a pixel 
 will display the spectrum for that pixel in the plot. Left clicking on a pixel will keep that pixel displayed until you left click again.
+
+![Basic Visualisation Controls](assets/basic_vis_controls_v1.svg)
 
 The following controls are available:  
 
-- Image Selection: Choose between visualising a ratioed image band, or a summary product (e.g. LCPINDEX2) created from the ratioed image.
-- Image Channel Selection: If visualising an image band, select which band to display.
-- Spectrum wavelength range: Choose the range of wavelengths to display in the spectrum plot.
-- Classification: Button to run classification across the image using the CAML model. This will take a few minutes to complete.
+- Image Selection (1): Choose between visualising a ratioed image band, or a summary product (e.g. LCPINDEX2) created from the ratioed image.
+- Image Channel Selection (2): If visualising an image band, select which band to display.
+- Spectrum wavelength range (4): Choose the range of wavelengths to display in the spectrum plot.
+- Classification (5): Button to run classification across the image using the CAML model. This will take a few minutes to complete.
 
 !!! tip 
     For identification of most hydrated mineral features, plotting between 1.0 and 2.6 microns is recommended.
@@ -46,13 +48,26 @@ After pressing the classification button, the CAML model will conduct pixel-wise
 
 ## Advanced Visualisation Controls (Post-Classification)
 
-After classification has been completed, the predicted mineralogy will be displayed on top of the image. The following additional controls will become available:
+After classification has been completed, the predicted mineralogy will be displayed on top of the image. 
 
-- Classification Results (On/Off): Toggle the mineralogy overlay on the image.
+![Advanced Visualisation Controls](assets/adv_vis_controls_v1.png)
+
+The following additional controls will become available:
+
+- Classification Results (On/Off) (1): Toggle the mineralogy overlay on the image.
 - Two filtering options:  
-    * Connected Components: Minimum number of pixels of the same mineralogy in a contiguous region to display.
-    * Minimum Confidence: Minimum confidence level to display prediction **averaged across the connected component**[^2].  
-- Run Filtering: This will apply the chosen filtering options (together) to the classification results.
+    * Minimum Confidence (2): Minimum confidence level to display prediction **averaged across the connected component**[^2].  
+    * Connected Components (3): Minimum number of pixels of the same mineralogy in a contiguous region to display.
+- Run Filtering (4): This will apply the chosen filtering options (together) to the classification results.
+- Spectral Reconstruction (On/Off) (5): Toggle the spectral reconstruction overlay on the image. 
+- Save Image (6): Save the image with the current mineralogy overlay and filtering applied.
+
+### Spectral Reconstructions
+
+One output produced by the CAML model are the spectral reconstructions for the first 248 bands of each pixel. These are often less noisy than the original spectra, and allow for easier manual verification of mineral predictions. The spectral reconstructions can be toggled on and off using the `Spectral Reconstruction` button.
+
+!!! Warning
+    The spectral reconstructions are not the same as the original spectra, and should not be used for quantitative analysis. They are only intended to help with manual verification of mineral predictions. Absorption feature centres and depths may be shifted from the original spectra.
 
 ## Saving Results
 
