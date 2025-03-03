@@ -14,7 +14,7 @@ import warnings
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
 from n2n4m.summary_parameters import IMPLEMENTED_SUMMARY_PARAMETERS
-from n2n4m.wavelengths import ALL_WAVELENGTHS
+from n2n4m.wavelengths import ALL_WAVELENGTHS, PLEBANI_WAVELENGTHS
 
 from classification_plot import (
     convert_to_coords_filter_regions_by_conf,
@@ -475,6 +475,29 @@ class CAML:
         line in the colour of the predicted class, and display the class name
         and confidence in the title.
         """
+
+        def get_wavelength_index(wavelength: float):
+            """
+            Get the index in PLEBANI_WAVELENGTHS for a given wavelength. If
+            the wavelength is not in the list, return the closest shorter
+            wavelength index. If a shorter wavelength is not available, return
+            0.
+
+            Reconstructions use the 248 bands from PLEBANI_WAVELENGTHS, but the
+            we are plotting using the 438 bands from ALL_WAVELENGTHS. To ensure
+            the plot works wrt the spectral slider, need to use this.
+            """
+            try:
+                return PLEBANI_WAVELENGTHS.index(wavelength)
+            except ValueError:
+                all_idx = ALL_WAVELENGTHS.index(wavelength)
+                for i in range(all_idx, -1, -1):
+                    try:
+                        return PLEBANI_WAVELENGTHS.index(ALL_WAVELENGTHS[i])
+                    except ValueError:
+                        pass
+                return 0
+
         # Catch changes to wavelength range slider
         if isinstance(event, list):
             event = "PlotRangeUpdate"
@@ -545,18 +568,29 @@ class CAML:
                 label="Spectrum",
             )
 
+            # Catch if plotted range is outside of reconstruction band range
+            if self.classification_flag and self.min_wavelength_idx > 248:
+                self.show_reconstruction = False
+            elif self.classification_flag:
+                self.show_reconstruction = True
+
             # Plot the reconstructed spectrum if the flag is set
             if self.show_reconstruction:
-                # only 248 bands available in reconstruction
-                max_wavelength_idx = min(self.max_wavelength_idx, 248)
+                min_recon_idx = get_wavelength_index(
+                    ALL_WAVELENGTHS[self.min_wavelength_idx]
+                )
+                if self.max_wavelength_idx > 248:
+                    max_recon_idx = 248
+                else:
+                    max_recon_idx = get_wavelength_index(
+                        ALL_WAVELENGTHS[self.max_wavelength_idx]
+                    )
                 self.ax_right.plot(
-                    ALL_WAVELENGTHS[
-                        self.min_wavelength_idx + 2 : max_wavelength_idx + 2
-                    ],
+                    PLEBANI_WAVELENGTHS[min_recon_idx:max_recon_idx],
                     self.reconstructed_image[
                         self.y_pos,
                         self.x_pos,
-                        self.min_wavelength_idx : max_wavelength_idx,
+                        min_recon_idx:max_recon_idx,
                     ]
                     - 0.02,  # offset to separate the two lines
                     color=line_col,
