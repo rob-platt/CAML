@@ -1,6 +1,5 @@
 # Features Currently in Development
 
-- Check to ensure CRISM_ML dir contains the correct dataset file.
 - Additional colours for all minerals in the classifier dataset.
 
 # Requests
