@@ -10,6 +10,7 @@ import threading
 import json
 import os
 import warnings
+import platform
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage
@@ -31,6 +32,11 @@ CONFIG_PATH = "CAML_config.json"
 if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
+if platform.system() == "Windows":
+    icon_path = "CAML_icon.ico"
+else:
+    icon_path = "CAML_icon.png"
+
 
 class CAML:
     def __init__(self, root):
@@ -39,7 +45,6 @@ class CAML:
         If image filepath passed, image loading prompt is skipped.
         """
         self.root = root  # root tkinter frame
-        self.root.title("CAML")
         self.hover_paused: bool = False  # flag if right plot is fixed
         # flag if classification has been run
         self.classification_flag: bool = False
@@ -67,6 +72,10 @@ class CAML:
         self.config: dict = {}  # configuration dictionary
         self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
         self.false_colour_composite: np.ndarray = None  # false colour comp
+
+        icon_img = tk.PhotoImage(file=icon_path)
+        self.root.iconphoto(True, icon_img)
+        self.root.title("CAML")
 
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
