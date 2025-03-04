@@ -31,11 +31,7 @@ CONFIG_PATH = "CAML_config.json"
 # path update if running from PyInstaller
 if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
-
-if platform.system() == "Windows":
-    icon_path = "CAML_icon.ico"
-else:
-    icon_path = "CAML_icon.png"
+    icon_path = os.path.join("_internal", "CAML_icon.png")
 
 
 class CAML:
@@ -1000,3 +996,4 @@ if __name__ == "__main__":
         root,
     )
     root.mainloop()
+    input("Press Enter to exit...")
