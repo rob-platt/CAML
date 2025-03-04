@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=["."],
     binaries=[],
-    datas=[("vae_classifier_1024.onnx", ".")],
+    datas=[("vae_classifier_1024.onnx", "."), ("CAML_icon.ico", "."), ("CAML_icon.png", ".")],
     hiddenimports=["PIL", "PIL._tkinter_finder", "PIL._imagingtk", "PIL.Image", "classification_plot.py", "CustomSlider.py"],
     hookspath=[],
     hooksconfig={},
@@ -36,6 +36,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=True,
+    icon="CAML_icon.ico",
 )
  
 coll = COLLECT(
@@ -47,5 +48,4 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='CAML',
-    icon="CAML_logo_noback_small_v1.ico",
 )
