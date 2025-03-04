@@ -8,7 +8,31 @@ To get started with CAML, you will need to install the system on your computer. 
 
 ### Desktop Application
 
-The desktop application is available for Windows, macOS, and Linux. To install the desktop application, download the appropriate installer from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases) and follow the installation instructions.
+The desktop application is available for Windows, macOS, and Linux. To install the desktop application, download the appropriate installer from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases) and follow the installation instructions for your operating system.
+
+#### Windows
+
+Download the "WindowsOS_CAML_vX_X_X.zip" file from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases). Extract the contents of the zip file to a folder on your computer. Run the "CAML.exe" file to start the application. Alternatively, you can start the program from the command line by navigating to the folder where you extracted the files and running the following command:
+
+```bash
+& .\CAML.exe
+```
+
+#### macOS
+
+Download the "macOS_CAML_vX_X_X.zip" file from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases). Extract the contents of the zip file to a folder on your computer. Run the "CAML" file to start the application. Alternatively, you can start the program from the command line by navigating to the folder where you extracted the files and running the following command:
+
+```bash
+./CAML
+```
+
+#### Linux
+
+Download the "LinuxOS_CAML_vX_X_X.zip" file from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases). Extract the contents of the zip file to a folder on your computer. Start the program from the command line by navigating to the folder where you extracted the files and running the following command:
+
+```bash
+./CAML
+```
 
 ### Python Package
 
