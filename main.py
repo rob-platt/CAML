@@ -10,7 +10,6 @@ import threading
 import json
 import os
 import warnings
-import platform
 
 from n2n4m.plot import Visualiser
 from n2n4m.crism_image import CRISMImage

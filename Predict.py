@@ -1,9 +1,13 @@
 import numpy as np
+import os
 import onnxruntime
 from n2n4m.n2n4m_denoise import clip_bands
 from n2n4m.preprocessing import impute_bad_values_in_image
 
 MODEL_PATH = "vae_classifier_1024.onnx"
+
+if os.path.exists("_internal"):
+    MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
 
 
 class Classifier:
