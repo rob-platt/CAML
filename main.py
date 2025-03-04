@@ -27,11 +27,12 @@ from Predict import Classifier
 
 MODEL_PATH = "vae_classifier_1024.onnx"
 CONFIG_PATH = "CAML_config.json"
+ICON_PATH = "CAML_icon.png"
 
 # path update if running from PyInstaller
 if os.path.exists("_internal"):
     MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
-    icon_path = os.path.join("_internal", "CAML_icon.png")
+    ICON_PATH = os.path.join("_internal", "CAML_icon.png")
 
 
 class CAML:
@@ -69,7 +70,7 @@ class CAML:
         self.crism_ml_dataset: str = None  # path to CRISM_ML dataset
         self.false_colour_composite: np.ndarray = None  # false colour comp
 
-        icon_img = tk.PhotoImage(file=icon_path)
+        icon_img = tk.PhotoImage(file=ICON_PATH)
         self.root.iconphoto(True, icon_img)
         self.root.title("CAML")
 
