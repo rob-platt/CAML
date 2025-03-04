@@ -25,13 +25,11 @@ from classification_plot import (
 from CustomSlider import Slider
 from Predict import Classifier
 
-MODEL_PATH = "vae_classifier_1024.onnx"
 CONFIG_PATH = "CAML_config.json"
 ICON_PATH = "CAML_icon.png"
 
 # path update if running from PyInstaller
 if os.path.exists("_internal"):
-    MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
     ICON_PATH = os.path.join("_internal", "CAML_icon.png")
 
 
