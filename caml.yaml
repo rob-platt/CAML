@@ -1,4 +1,4 @@
-name: caml
+name: caml_torchless
 channels:
   - pytorch
   - nvidia
@@ -236,7 +236,7 @@ dependencies:
       - mkdocs-material==9.6.5
       - mkdocs-material-extensions==1.3.1
       - msgpack==1.0.5
-      - n2n4m @ git+https://github.com/rob-platt/n2n4m.git@main#egg=n2n4m
+      - n2n4m @ git+https://github.com/rob-platt/n2n4m.git@n2n4m_torchless#egg=n2n4m
       - onnx==1.17.0
       - onnxruntime==1.20.1
       - paginate==0.5.7
