@@ -6,9 +6,10 @@ from n2n4m.preprocessing import impute_bad_values_in_image
 
 MODEL_PATH = "vae_classifier_1024.onnx"
 
-if os.path.exists("_internal"):
-    MODEL_PATH = os.path.join("_internal", "vae_classifier_1024.onnx")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
+if os.path.exists("_internal"):
+    MODEL_PATH = os.path.join(BASE_DIR, "_internal", "vae_classifier_1024.onnx")
 
 class Classifier:
     """Classify the CRISM cube using the CRISM Classifier model."""

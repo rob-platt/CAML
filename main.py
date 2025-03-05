@@ -27,9 +27,11 @@ from Predict import Classifier
 CONFIG_PATH = "CAML_config.json"
 ICON_PATH = "CAML_icon.png"
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
 # path update if running from PyInstaller
 if os.path.exists("_internal"):
-    ICON_PATH = os.path.join("_internal", "CAML_icon.png")
+    ICON_PATH = os.path.join(BASE_DIR, "_internal", "CAML_icon.png")
 
 
 class CAML:
