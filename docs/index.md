@@ -20,9 +20,10 @@ Download the "WindowsOS_CAML_vX_X_X.zip" file from the [releases page](https://g
 
 #### macOS
 
-Download the "macOS_CAML_vX_X_X.zip" file from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases). Extract the contents of the zip file to a folder on your computer. Run the "CAML" file to start the application. Alternatively, you can start the program from the command line by navigating to the folder where you extracted the files and running the following command:
+Download the "macOS_CAML_vX_X_X.zip" file from the [releases page](https://github.com/rob-platt/CRISM_classifier_application/releases). Extract the contents of the zip file to a folder on your computer. From the command line, navigate to the folder where you extracted the files and running the following commands:
 
 ```bash
+xattr -r -d com.apple.quarantine _internal/*
 ./CAML
 ```
 

@@ -1,9 +1,5 @@
 # How To Use the Desktop Application
 
-## Installation
-
-Installation should be as simple as downloading the latest [release folder](https://github.com/rob-platt/CRISM_classifier_application/releases) for your operating system, unzipping the folder, and running the executable file.
-
 ## Selecting CRISM_ML Data
 
 When you run CAML, the first thing you will be prompted for is the directory containing the CRISM_ML training dataset. This must be a folder, containing the `CRISM_bland_unratioed.mat` file for training the bland pixel classifier from [Plebani et al. 2022](https://doi.org/10.1016/j.icarus.2021.114849) ([Github Link](https://github.com/Banus/crism_ml)). This dataset can be found [here](https://zenodo.org/records/13338091).
