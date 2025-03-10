@@ -1,0 +1,758 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://rob-platt.github.io/CRISM_classifier_application/How_To_Use/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../Machine_Learning/">
+      
+      
+      <link rel="icon" href="../assets/CAML_logo_noback_small_v1.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.7">
+    
+    
+      
+        <title>How To Use the Desktop Application - CAML</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-to-use-the-desktop-application" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="CAML" class="md-header__button md-logo" aria-label="CAML" data-md-component="logo">
+      
+  <img src="../assets/CAML_logo_text_noback_v1.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CAML
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              How To Use the Desktop Application
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Welcome to CAML
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  How To Use the Desktop Application
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../Machine_Learning/" class="md-tabs__link">
+        
+  
+    
+  
+  CAML Methodology
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WiP/" class="md-tabs__link">
+        
+  
+    
+  
+  Features Currently in Development
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="CAML" class="md-nav__button md-logo" aria-label="CAML" data-md-component="logo">
+      
+  <img src="../assets/CAML_logo_text_noback_v1.png" alt="logo">
+
+    </a>
+    CAML
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Welcome to CAML
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    How To Use the Desktop Application
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    How To Use the Desktop Application
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-crism_ml-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selecting CRISM_ML Data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-a-crism-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading a CRISM Image
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-visualisation-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Visualisation Controls
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Classification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-visualisation-controls-post-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Visualisation Controls (Post-Classification)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Visualisation Controls (Post-Classification)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spectral-reconstructions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spectral Reconstructions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-graphics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Graphics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-crism-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving CRISM Image
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Machine_Learning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CAML Methodology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WiP/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Features Currently in Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-crism_ml-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selecting CRISM_ML Data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-a-crism-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading a CRISM Image
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-visualisation-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Visualisation Controls
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Classification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-visualisation-controls-post-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Visualisation Controls (Post-Classification)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Visualisation Controls (Post-Classification)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spectral-reconstructions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spectral Reconstructions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-graphics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Graphics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-crism-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving CRISM Image
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="how-to-use-the-desktop-application">How To Use the Desktop Application</h1>
+<h2 id="selecting-crism_ml-data">Selecting CRISM_ML Data</h2>
+<p>When you run CAML, the first thing you will be prompted for is the directory containing the CRISM_ML training dataset. This must be a folder, containing the <code>CRISM_bland_unratioed.mat</code> file for training the bland pixel classifier from <a href="https://doi.org/10.1016/j.icarus.2021.114849">Plebani et al. 2022</a> (<a href="https://github.com/Banus/crism_ml">Github Link</a>). This dataset can be found <a href="https://zenodo.org/records/13338091">here</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>CAML cannot load CRISM imagery without this dataset. The dataset must be named <code>CRISM_bland_unratioed.mat</code></p>
+</div>
+<h2 id="loading-a-crism-image">Loading a CRISM Image</h2>
+<p>CAML is designed to work <strong>solely with CRISM L sensor TRDR images with TRR3 processing</strong>. Standard photometric and atmospheric corrections, including the "Volcano-Scan" atmospheric correction, are also expected to have been applied <strong>before</strong> loading the image into CAML. There are two methods for acquiring this data:  </p>
+<ul>
+<li>Downloading the data from the <a href="https://pds-geosciences.wustl.edu/missions/mro/crism.htm">PDS Geosciences Node</a>, and then applying the corrections using the <a href="https://pds-geosciences.wustl.edu/missions/mro/crism.htm">CRISM Analysis Toolkit</a> (CAT) with ENVI software.</li>
+<li>Using <a href="https://marssi.univ-lyon1.fr/MarsSI/map/mars/#0/0/0/MOLA">MarsSI</a> to source CRISM images with the desired corrections already applied. The data products from MarsSI with the <code>_CAT_corr.img</code> suffix are the ones to use. NB: The suffix must be removed to load the image into CAML.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Example: &quot;FRT00009A16_07_IF166L_TRR3_CAT_corr.img&quot; -&gt; &quot;FRT00009A16_07_IF166L_TRR3.img&quot;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>         &quot;FRT00009A16_07_IF166L_TRR3_CAT_corr.hdr&quot; -&gt; &quot;FRT00009A16_07_IF166L_TRR3.hdr&quot;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>         &quot;FRT00009A16_07_IF166L_TRR3.lbl&quot; -&gt; &quot;FRT00009A16_07_IF166L_TRR3.lbl&quot;
+</code></pre></div></li>
+</ul>
+<p>The directory containing the <code>.img</code> file <strong>must</strong> also contain the <code>.lbl</code> file of the image. The loading process may take up to a few minutes.</p>
+<h2 id="basic-visualisation-controls">Basic Visualisation Controls</h2>
+<p>After loading a CRISM image, you will be presented with the image alongside a plot of individual spectra. You can pan and zoom on the image plot using the controls underneath it (3). Hovering over a pixel 
+will display the spectrum for that pixel in the plot. Left clicking on a pixel will keep that pixel displayed until you left click again.</p>
+<p><img alt="Basic Visualisation Controls" src="../assets/basic_vis_controls_v1.svg" /></p>
+<p>The following controls are available:  </p>
+<ul>
+<li>Image Selection (1): Choose between visualising a ratioed image band, or a summary product (e.g. LCPINDEX2) created from the ratioed image.</li>
+<li>Image Channel Selection (2): If visualising an image band, select which band to display.</li>
+<li>Spectrum wavelength range (4): Choose the range of wavelengths to display in the spectrum plot.</li>
+<li>Classification (5): Button to run classification across the image using the CAML model. This will take a few minutes to complete.</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For identification of most hydrated mineral features, plotting between 1.0 and 2.6 microns is recommended.</p>
+</div>
+<h2 id="classification">Classification</h2>
+<p>After pressing the classification button, the CAML model will conduct pixel-wise classification across the image. This should be possible with almost any level of hardware<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>, as the model is relatively small. The classification process may take a few minutes to complete, depending on the size of the image and the hardware being used. </p>
+<h2 id="advanced-visualisation-controls-post-classification">Advanced Visualisation Controls (Post-Classification)</h2>
+<p>After classification has been completed, the predicted mineralogy will be displayed on top of the image. </p>
+<p><img alt="Advanced Visualisation Controls" src="../assets/adv_vis_controls_v1.png" /></p>
+<p>The following additional controls will become available:</p>
+<ul>
+<li>Classification Results (On/Off) (1): Toggle the mineralogy overlay on the image.</li>
+<li>Two filtering options:  <ul>
+<li>Minimum Confidence (2): Minimum confidence level to display prediction <strong>averaged across the connected component</strong><sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup>.  </li>
+<li>Connected Components (3): Minimum number of pixels of the same mineralogy in a contiguous region to display.</li>
+</ul>
+</li>
+<li>Run Filtering (4): This will apply the chosen filtering options (together) to the classification results.</li>
+<li>Spectral Reconstruction (On/Off) (5): Toggle the spectral reconstruction overlay on the image. </li>
+<li>Save Image (6): Save the image with the current mineralogy overlay and filtering applied.</li>
+</ul>
+<h3 id="spectral-reconstructions">Spectral Reconstructions</h3>
+<p>One output produced by the CAML model are the spectral reconstructions for the first 248 bands of each pixel. These are often less noisy than the original spectra, and allow for easier manual verification of mineral predictions. The spectral reconstructions can be toggled on and off using the <code>Spectral Reconstruction</code> button.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The spectral reconstructions are not the same as the original spectra, and should not be used for quantitative analysis. They are only intended to help with manual verification of mineral predictions. Absorption feature centres and depths may be shifted from the original spectra.</p>
+</div>
+<h2 id="saving-results">Saving Results</h2>
+<h3 id="saving-graphics">Saving Graphics</h3>
+<p>The image plot currently displayed can be saved as a .png file by using the <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 9H5V5h10m-3 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3m5-16H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7z"/></svg></span> icon underneath the image plot. This will save the image with the current mineralogy overlay and any filtering applied.</p>
+<h3 id="saving-crism-image">Saving CRISM Image</h3>
+<p>The CRISM image can be written out to an .img file using the <code>Save Image</code> button. This will save the original image to a new directory, with the mineral predictions as band 437, and the confidence levels as band 438. The current mineralogy overlay displayed are the predictions that will be saved, with all other pixels labelled as no data (65535 for CRISM data)<sup id="fnref:3"><a class="footnote-ref" href="#fn:3">3</a></sup>. </p>
+<p>To allow for ENVI + CAT compatability (for map projection and further analysis), the image must be saved using the <strong>exact</strong> name of the original image file. Therefore please pick a new directory to save the image to, and ensure the original image file is not in that directory. The header (.hdr) and label (.lbl) files will also be saved. </p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Minimum 8GB RAM recommended. Currrently no GPU support.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>There are several ways these two filtering steps could be combined, we found this to give the most visually sensible results.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:3">
+<p>This allows for easy visualisation in GIS software, without having to compute additional filtering. If you wish to have access to all of the predictions and filter in GIS, set the minimum confidence to 0.0 and the connected components to 0 before saving.&#160;<a class="footnote-backref" href="#fnref:3" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.indexes", "content.code.annotate", "content.code.copy", "content.tooltips", "content.footnote.tooltips"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
